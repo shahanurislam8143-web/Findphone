@@ -1,420 +1,405 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find My Device</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 12px;
-            background-color: var(--tg-theme-bg-color, #f4f4f9);
-            color: var(--tg-theme-text-color, #333);
-            margin: 0;
-        }
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .lang-btn {
-            background: #34495e;
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            width: auto;
-        }
-        .card {
-            background: var(--tg-theme-secondary-bg-color, #ffffff);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .ad-banner {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            color: #0d47a1;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            text-align: center;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #fff);
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 5px;
-        }
-        .btn-approve { background-color: #2ecc71; width: auto; padding: 6px 12px; margin-right: 5px; font-size: 12px; }
-        .btn-reject { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 12px; }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            margin: 6px 0;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        table, th, td { border: 1px solid #ddd; }
-        th, td { padding: 6px; text-align: left; }
-        .badge { padding: 3px 6px; border-radius: 4px; color: #fff; font-size: 10px; }
-        .bg-pending { background: #f39c12; }
-        .bg-approved { background: #2ecc71; }
-        .bg-rejected { background: #e74c3c; }
-        .success-box, .join-box {
-            background: #e8f5e9;
-            border: 1px solid #a5d6a7;
-            color: #1b5e20;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .join-box {
-            background: #fff3cd;
-            border-color: #ffeeba;
-            color: #856404;
-        }
-        .pay-info {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Link - Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      --glass-bg: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --accent-color: #6366f1;
+      --accent-glow: linear-gradient(135deg, #6366f1, #a855f7);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Top Bar */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Ad Banner */
+    .ad-banner {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .ad-banner a {
+      color: #fbbf24;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Main Box */
+    .channel-box {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .channel-icon {
+      font-size: 40px;
+      background: var(--accent-glow);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .channel-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .channel-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Action Buttons */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-glow);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Admin Section */
+    .admin-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a855f7;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.2);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent-color);
+    }
+
+    /* Modal Alert */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: #1e1b4b;
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      width: 85%;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .modal p {
+      margin: 16px 0;
+      font-size: 15px;
+    }
+  </style>
 </head>
 <body>
 
+  <div class="container">
+    <!-- Top Header -->
     <div class="header-bar">
-        <span>🌐 Language / ভাষা:</span>
-        <button class="lang-btn" onclick="toggleLanguage()">English / বাংলা</button>
+      <div style="font-weight: 700; font-size: 18px; letter-spacing: 0.5px;">⚡ NEXUS LINK</div>
+      <button class="lang-btn" onclick="toggleLang()"><i class="fa-solid fa-globe"></i> <span id="langText">English</span></button>
     </div>
 
-    <div id="third-party-ads"></div>
-
-    <div class="ad-banner" id="custom-ad-banner" style="display: none;">
-        <span id="ad-text"></span> 
-        <a id="ad-link" href="#" target="_blank" style="font-weight: bold;">[Visit]</a>
+    <!-- Ad Banner -->
+    <div class="ad-banner" id="adBox">
+      🔥 <span id="adText">বিশেষ ছাড়! ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন।</span> 
+      <a href="#" id="adLink" target="_blank">[Visit]</a>
     </div>
 
-    <!-- 🔒 ১. পেমেন্ট ফর্ম -->
-    <div id="payment-section" class="card" style="display: none;">
-        <h2 style="text-align: center;" data-bn="🔒 প্রিমিয়াম সেবা এক্সেস" data-en="🔒 Premium Service Access">🔒 প্রিমিয়াম সেবা এক্সেস</h2>
-        <p data-bn="Find My Device সার্ভিসটি ব্যবহার করতে পেমেন্ট করুন।" data-en="Pay to access Find My Device Service.">Find My Device সার্ভিসটি ব্যবহার করতে পেমেন্ট করুন।</p>
-        
-        <div class="pay-info">
-            📌 <strong>bKash Personal:</strong> <code id="show-bkash">...</code><br>
-            📌 <strong>Nagad Personal:</strong> <code id="show-nagad">...</code><br>
-            📌 <strong>Binance Pay ID / Address:</strong> <code id="show-binance">...</code>
-        </div>
-        
-        <label data-bn="আপনার ফোন / অ্যাকাউন্টের নাম:" data-en="Your Phone / Account Name:">আপনার ফোন / অ্যাকাউন্টের নাম:</label>
-        <input type="text" id="user-phone" placeholder="017XXXXXXXX / Username">
-        
-        <label data-bn="পেমেন্ট মেথড:" data-en="Payment Method:">পেমেন্ট মেথড:</label>
-        <select id="pay-method">
-            <option value="bKash">bKash</option>
-            <option value="Nagad">Nagad</option>
-            <option value="Binance">Binance</option>
-        </select>
-        
-        <label data-bn="ট্রানজেকশন আইডি (TrxID / TxID):" data-en="Transaction ID (TrxID / TxID):">ট্রানজেকশন আইডি (TrxID / TxID):</label>
-        <input type="text" id="trx-id" placeholder="e.g. TRX12345678">
-        
-        <button onclick="submitPayment()" data-bn="পেমেন্ট সাবমিট করুন" data-en="Submit Payment">পেমেন্ট সাবমিট করুন</button>
-        <div id="pay-msg" style="margin-top: 10px; text-align: center; font-size: 13px;"></div>
+    <!-- Join Verification Box -->
+    <div class="glass-card channel-box">
+      <div class="channel-icon"><i class="fa-solid fa-bullhorn"></i></div>
+      <div class="channel-title" id="txtTitle">আমাদের চ্যানেলে যুক্ত হন</div>
+      <div class="channel-desc" id="txtDesc">বটের সব সার্ভিস ব্যবহারের জন্য অফিসিয়াল চ্যানেলে জয়েন থাকা বাধ্যতামূলক।</div>
+      
+      <div class="btn-group">
+        <a id="btnJoinChannel" href="https://t.me/nexuslink0" target="_blank" class="btn btn-secondary">
+          <i class="fa-brands fa-telegram"></i> <span id="txtJoinBtn">Join Channel</span>
+        </a>
+        <button class="btn btn-primary" onclick="verifyJoin()">
+          <i class="fa-solid fa-circle-check"></i> <span id="txtVerifyBtn">Verify Join & Access</span>
+        </button>
+      </div>
     </div>
 
-    <!-- 📢 ২. চ্যানেল জয়েন বক্স -->
-    <div id="join-section" class="card" style="display: none;">
-        <div class="join-box">
-            <h2 data-bn="📢 আমাদের চ্যানেলে জয়েন করুন" data-en="📢 Join Our Telegram Channel">📢 আমাদের চ্যানেলে জয়েন করুন</h2>
-            <p data-bn="প্রিমিয়াম লিংক পেতে আপনাকে অবশ্যই আমাদের টেলিগ্রাম চ্যানেলে জয়েন থাকতে হবে।" data-en="You must join our Telegram channel to access the premium link.">প্রিমিয়াম লিংক পেতে আপনাকে অবশ্যই আমাদের টেলিগ্রাম চ্যানেলে জয়েন থাকতে হবে।</p>
-            <button id="join-chan-btn" style="background-color: #0088cc; margin-bottom: 10px;" data-bn="👉 Join Telegram Channel" data-en="👉 Join Telegram Channel">👉 Join Telegram Channel</button>
-            <button id="verify-join-btn" style="background-color: #27ae60;" data-bn="✅ Verify Join & Access Link" data-en="✅ Verify Join & Access Link">✅ Verify Join & Access Link</button>
-        </div>
+    <!-- Admin Panel (Auto Visible for Admin UID) -->
+    <div class="glass-card" id="adminPanel" style="display: none;">
+      <div class="admin-title"><i class="fa-solid fa-user-shield"></i> Admin Settings</div>
+      
+      <div class="input-group">
+        <label>bKash Number</label>
+        <input type="text" id="admBkash">
+      </div>
+      <div class="input-group">
+        <label>Nagad Number</label>
+        <input type="text" id="admNagad">
+      </div>
+      <div class="input-group">
+        <label>Required Channel (@username)</label>
+        <input type="text" id="admChannel">
+      </div>
+      <div class="input-group">
+        <label>Ad Text</label>
+        <input type="text" id="admAdText">
+      </div>
+      <div class="input-group">
+        <label>Ad Link</label>
+        <input type="text" id="admAdLink">
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveAdminSettings()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Settings
+      </button>
     </div>
+  </div>
 
-    <!-- 🎯 ৩. পেমেন্ট সফল ও জয়েন ভেরিফাই সম্পন্ন -->
-    <div id="service-section" class="card" style="display: none;">
-        <div class="success-box">
-            <h2 data-bn="🎉 পেমেন্ট ও জয়েন ভেরিফাই সফল!" data-en="🎉 Payment & Verification Successful!">🎉 পেমেন্ট ও জয়েন ভেরিফাই সফল!</h2>
-            <p data-bn="আপনাকে মূল বটে নিয়ে যাওয়া হচ্ছে..." data-en="Redirecting you to the target bot...">আপনাকে মূল বটে নিয়ে যাওয়া হচ্ছে...</p>
-            <button id="go-to-bot-btn" style="background-color: #27ae60;" data-bn="🚀 মূল বটে প্রবেশ করুন" data-en="🚀 Access Target Bot">🚀 মূল বটে প্রবেশ করুন</button>
-        </div>
+  <!-- Custom Alert Modal -->
+  <div class="modal-overlay" id="customModal">
+    <div class="modal">
+      <i class="fa-solid fa-circle-info" style="font-size: 36px; color: #a855f7;"></i>
+      <p id="modalMsg">ম্যাসেজ</p>
+      <button class="btn btn-primary" onclick="closeModal()">OK</button>
     </div>
+  </div>
 
-    <!-- 🛠️ ৪. অ্যাডমিন প্যানেল -->
-    <div id="admin-panel" class="card" style="display: none; background: #fff8e1;">
-        <h3>🛠️ Admin Management Panel</h3>
-        
-        <h4>📥 Pending Payment Requests:</h4>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>User & Account</th>
-                        <th>Method / TrxID</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="payment-table-body"></tbody>
-            </table>
-        </div>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        <hr style="margin: 15px 0;">
+    const userId = tg.initDataUnsafe?.user?.id || 7779071715; // default fallback
+    let currentLang = 'bn';
 
-        <h4>💳 Payment Accounts & Redirect Settings</h4>
-        <label>bKash Personal Number:</label>
-        <input type="text" id="admin-bkash">
-        
-        <label>Nagad Personal Number:</label>
-        <input type="text" id="admin-nagad">
+    // Load initial app data
+    async function loadAppData() {
+      try {
+        const res = await fetch(`/api/init-app/${userId}`);
+        const data = await res.json();
 
-        <label>Binance Pay ID / TRC20 Address:</label>
-        <input type="text" id="admin-binance">
-
-        <label>Target Bot Link (পেমেন্টের পর ইউজার যেখানে যাবে):</label>
-        <input type="text" id="admin-target-bot" placeholder="https://t.me/YourTargetBotUsername">
-
-        <label>Required Channel Username (যেমন: @nexuslink0):</label>
-        <input type="text" id="admin-req-channel" placeholder="@nexuslink0">
-
-        <label>Telegram Channel Invite Link (Force Join):</label>
-        <input type="text" id="admin-chan-link" placeholder="https://t.me/nexuslink0">
-
-        <hr style="margin: 15px 0;">
-
-        <h4>📢 Ads Customization</h4>
-        <label>Banner Ad Text:</label>
-        <input type="text" id="admin-ad-text">
-        
-        <label>Banner Ad Link:</label>
-        <input type="text" id="admin-ad-url">
-
-        <label>Adsterra / Monetag Script Code:</label>
-        <textarea id="admin-ad-script" rows="4"></textarea>
-        
-        <button onclick="saveAdminSettings()" style="background-color: #f39c12;">Save All Settings</button>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const ADMIN_ID = 7779071715; 
-        const user = tg.initDataUnsafe.user || { id: 0, first_name: 'Guest' };
-        let targetUrl = '';
-        let currentLang = 'bn';
-
-        function toggleLanguage() {
-            currentLang = currentLang === 'bn' ? 'en' : 'bn';
-            document.querySelectorAll('[data-bn]').forEach(el => {
-                el.innerText = el.getAttribute(`data-${currentLang}`);
-            });
+        if (data.isApproved) {
+          showAlert("অভিনন্দন! আপনি সফলভাবে অ্যাক্সেস পেয়েছেন।");
         }
 
-        fetch(`/api/init-app/${user.id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.appSettings) {
-                    targetUrl = data.appSettings.targetBotUrl;
-                    document.getElementById('show-bkash').innerText = data.appSettings.bkashNumber || 'N/A';
-                    document.getElementById('show-nagad').innerText = data.appSettings.nagadNumber || 'N/A';
-                    document.getElementById('show-binance').innerText = data.appSettings.binanceAddress || 'N/A';
-
-                    document.getElementById('join-chan-btn').onclick = () => {
-                        tg.openTelegramLink(data.appSettings.channelLink || "https://t.me/nexuslink0");
-                    };
-
-                    if (data.appSettings.bannerAdText) {
-                        document.getElementById('ad-text').innerText = data.appSettings.bannerAdText;
-                        document.getElementById('ad-link').href = data.appSettings.bannerAdUrl;
-                        document.getElementById('custom-ad-banner').style.display = 'block';
-                    }
-                    if (data.appSettings.thirdPartyScript) {
-                        injectScript(data.appSettings.thirdPartyScript);
-                    }
-                }
-
-                if (data.approved) {
-                    if (data.isJoined) {
-                        showSuccessService();
-                    } else {
-                        document.getElementById('join-section').style.display = 'block';
-                    }
-                } else {
-                    document.getElementById('payment-section').style.display = 'block';
-                }
-
-                if (user.id === ADMIN_ID) {
-                    document.getElementById('admin-panel').style.display = 'block';
-                    loadAdminData();
-                }
-            });
-
-        document.getElementById('verify-join-btn').onclick = () => {
-            fetch(`/api/check-join/${user.id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.isJoined) {
-                        document.getElementById('join-section').style.display = 'none';
-                        showSuccessService();
-                    } else {
-                        alert(currentLang === 'bn' ? 'আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি!' : 'You have not joined our channel yet!');
-                    }
-                });
-        };
-
-        function showSuccessService() {
-            document.getElementById('service-section').style.display = 'block';
-            const redirectToTarget = () => {
-                if (targetUrl.includes('t.me')) {
-                    tg.openTelegramLink(targetUrl);
-                } else {
-                    tg.openLink(targetUrl);
-                }
-            };
-            document.getElementById('go-to-bot-btn').onclick = redirectToTarget;
-            setTimeout(redirectToTarget, 3000);
+        // Apply Settings
+        if (data.appSettings) {
+          const set = data.appSettings;
+          document.getElementById('adText').innerText = set.bannerAdText || '';
+          document.getElementById('adLink').href = set.bannerAdUrl || '#';
+          document.getElementById('btnJoinChannel').href = set.channelLink || '#';
+          
+          // Populate Admin Inputs
+          document.getElementById('admBkash').value = set.bkashNumber || '';
+          document.getElementById('admNagad').value = set.nagadNumber || '';
+          document.getElementById('admChannel').value = set.requiredChannel || '';
+          document.getElementById('admAdText').value = set.bannerAdText || '';
+          document.getElementById('admAdLink').value = set.bannerAdUrl || '';
         }
 
-        function injectScript(scriptHtml) {
-            const container = document.getElementById('third-party-ads');
-            const range = document.createRange();
-            range.setStart(container, 0);
-            container.appendChild(range.createContextualFragment(scriptHtml));
+        if (data.isAdmin) {
+          document.getElementById('adminPanel').style.display = 'block';
         }
 
-        function submitPayment() {
-            const phone = document.getElementById('user-phone').value;
-            const method = document.getElementById('pay-method').value;
-            const trxId = document.getElementById('trx-id').value;
+      } catch (err) {
+        console.error("Data load failed", err);
+      }
+    }
 
-            if (!phone || !trxId) return alert('অ্যাকাউন্ট তথ্য এবং TrxID প্রদান করুন!');
-
-            fetch('/api/submit-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.id,
-                    userName: user.first_name,
-                    phone: phone,
-                    method: method,
-                    trxId: trxId
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('pay-msg').innerText = data.message;
-            });
+    async function verifyJoin() {
+      try {
+        const res = await fetch(`/api/check-join/${userId}`);
+        const data = await res.json();
+        if (data.joined) {
+          showAlert("ভেরিফিকেশন সফল হয়েছে! আপনাকে ধন্যবাদ।");
+        } else {
+          showAlert("আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি! দয়া করে চ্যানেলে যুক্ত হন।");
         }
+      } catch (e) {
+        showAlert("ভেরিফাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      }
+    }
 
-        function loadAdminData() {
-            fetch(`/api/admin/payments/${user.id}`)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('payment-table-body');
-                    tbody.innerHTML = '';
+    async function saveAdminSettings() {
+      const payload = {
+        adminId: userId,
+        bkashNumber: document.getElementById('admBkash').value,
+        nagadNumber: document.getElementById('admNagad').value,
+        requiredChannel: document.getElementById('admChannel').value,
+        bannerAdText: document.getElementById('admAdText').value,
+        bannerAdUrl: document.getElementById('admAdLink').value
+      };
 
-                    data.payments.forEach(p => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><b>${p.userName}</b><br>${p.phone}<br><small>(${p.userId})</small></td>
-                            <td><b>${p.method}</b><br><code>${p.trxId}</code></td>
-                            <td><span class="badge bg-${p.status}">${p.status}</span></td>
-                            <td>
-                                ${p.status === 'pending' ? `
-                                    <button class="btn-approve" onclick="handleAction(${p.id}, 'approve')">Approve</button>
-                                    <button class="btn-reject" onclick="handleAction(${p.id}, 'reject')">Reject</button>
-                                ` : 'N/A'}
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert("অ্যাডমিন সেটিংস সফলভাবে সেভ হয়েছে!");
+        loadAppData();
+      }
+    }
 
-                    document.getElementById('admin-bkash').value = data.appSettings.bkashNumber || '';
-                    document.getElementById('admin-nagad').value = data.appSettings.nagadNumber || '';
-                    document.getElementById('admin-binance').value = data.appSettings.binanceAddress || '';
-                    document.getElementById('admin-target-bot').value = data.appSettings.targetBotUrl || '';
-                    document.getElementById('admin-req-channel').value = data.appSettings.requiredChannel || '';
-                    document.getElementById('admin-chan-link').value = data.appSettings.channelLink || '';
-                    document.getElementById('admin-ad-text').value = data.appSettings.bannerAdText || '';
-                    document.getElementById('admin-ad-url').value = data.appSettings.bannerAdUrl || '';
-                    document.getElementById('admin-ad-script').value = data.appSettings.thirdPartyScript || '';
-                });
-        }
+    function showAlert(msg) {
+      document.getElementById('modalMsg').innerText = msg;
+      document.getElementById('customModal').style.display = 'flex';
+    }
 
-        function handleAction(paymentId, action) {
-            fetch('/api/admin/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: user.id, paymentId: paymentId, action: action })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    loadAdminData();
-                }
-            });
-        }
+    function closeModal() {
+      document.getElementById('customModal').style.display = 'none';
+    }
 
-        function saveAdminSettings() {
-            const bkash = document.getElementById('admin-bkash').value;
-            const nagad = document.getElementById('admin-nagad').value;
-            const binance = document.getElementById('admin-binance').value;
-            const targetBot = document.getElementById('admin-target-bot').value;
-            const reqChan = document.getElementById('admin-req-channel').value;
-            const chanLink = document.getElementById('admin-chan-link').value;
-            const text = document.getElementById('admin-ad-text').value;
-            const url = document.getElementById('admin-ad-url').value;
-            const script = document.getElementById('admin-ad-script').value;
+    function toggleLang() {
+      currentLang = currentLang === 'bn' ? 'en' : 'bn';
+      document.getElementById('langText').innerText = currentLang === 'bn' ? 'English' : 'বাংলা';
+      
+      if(currentLang === 'en') {
+        document.getElementById('txtTitle').innerText = "Join Our Channel";
+        document.getElementById('txtDesc').innerText = "Must join our official channel to use the features.";
+        document.getElementById('txtJoinBtn').innerText = "Join Channel";
+        document.getElementById('txtVerifyBtn').innerText = "Verify Join & Access";
+      } else {
+        document.getElementById('txtTitle').innerText = "আমাদের চ্যানেলে যুক্ত হন";
+        document.getElementById('txtDesc').innerText = "বটের সব সার্ভিস ব্যবহারের জন্য অফিসিয়াল চ্যানেলে জয়েন থাকা বাধ্যতামূলক।";
+        document.getElementById('txtJoinBtn').innerText = "Join Channel";
+        document.getElementById('txtVerifyBtn').innerText = "Verify Join & Access";
+      }
+    }
 
-            fetch('/api/admin/update-settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    adminId: user.id,
-                    bkashNumber: bkash,
-                    nagadNumber: nagad,
-                    binanceAddress: binance,
-                    targetBotUrl: targetBot,
-                    requiredChannel: reqChan,
-                    channelLink: chanLink,
-                    bannerAdText: text,
-                    bannerAdUrl: url,
-                    thirdPartyScript: script
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    alert('সব সেটিংস সফলভাবে সেভ করা হয়েছে!');
-                    location.reload();
-                }
-            });
-        }
-    </script>
+    loadAppData();
+  </script>
 </body>
-</html>
+    </html>
+    
