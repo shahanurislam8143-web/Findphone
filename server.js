@@ -1,208 +1,207 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+const express = require('express');
+const TelegramBot = require('node-telegram-bot-api');
+const cors = require('cors');
 
-const user = tg.initDataUnsafe.user || { id: 0, first_name: 'Guest' };
-let targetUrl = '';
-let currentLang = 'bn';
+const app = express();
+app.use(express.json());
+app.use(cors());
 
-function toggleLanguage() {
-    currentLang = currentLang === 'bn' ? 'en' : 'bn';
-    document.querySelectorAll('[data-bn]').forEach(el => {
-        el.innerText = el.getAttribute(`data-${currentLang}`);
-    });
-}
+// ==================== ⚙️ CONFIGURATION ⚙️ ====================
+const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
+const ADMIN_ID = 7779071715;                                   
+const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';      
+// ==============================================================
 
-function initApp() {
-    fetch(`/api/init-app/${user.id}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.appSettings) {
-                targetUrl = data.appSettings.targetBotUrl;
-                document.getElementById('show-bkash').innerText = data.appSettings.bkashNumber || 'N/A';
-                document.getElementById('show-nagad').innerText = data.appSettings.nagadNumber || 'N/A';
-                document.getElementById('show-binance').innerText = data.appSettings.binanceAddress || 'N/A';
+const bot = new TelegramBot(TOKEN, { polling: true });
 
-                document.getElementById('join-chan-btn').onclick = () => {
-                    tg.openTelegramLink(data.appSettings.channelLink || "https://t.me/nexuslink0");
-                };
+let payments = []; 
+let userAccess = new Map(); 
 
-                if (data.appSettings.bannerAdText) {
-                    document.getElementById('ad-text').innerText = data.appSettings.bannerAdText;
-                    document.getElementById('ad-link').href = data.appSettings.bannerAdUrl;
-                    document.getElementById('custom-ad-banner').style.display = 'block';
-                }
-                if (data.appSettings.thirdPartyScript) {
-                    injectScript(data.appSettings.thirdPartyScript);
-                }
-            }
-
-            // 🎯 পেমেন্ট ও জয়েন লজিক ফিক্স
-            if (data.approved) {
-                document.getElementById('payment-section').style.display = 'none';
-                
-                // পেমেন্ট অ্যাপ্রুভ হলেও আগে চ্যানেল জয়েন চেক করবে
-                if (data.isJoined) {
-                    showSuccessService();
-                } else {
-                    // চ্যানেলে যুক্ত না থাকলে বাধ্যতামুলক জয়েন বক্স দেখাবে
-                    document.getElementById('join-section').style.display = 'block';
-                }
-            } else {
-                document.getElementById('payment-section').style.display = 'block';
-            }
-
-            // অ্যাডমিন প্যানেল চেক
-            fetch(`/api/admin/payments/${user.id}`)
-                .then(res => {
-                    if (res.ok) return res.json();
-                    throw new Error('Not admin');
-                })
-                .then(adminData => {
-                    document.getElementById('admin-panel').style.display = 'block';
-                    loadAdminDataWithData(adminData);
-                })
-                .catch(() => {
-                    document.getElementById('admin-panel').style.display = 'none';
-                });
-        });
-}
-
-document.getElementById('verify-join-btn').onclick = () => {
-    fetch(`/api/check-join/${user.id}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.isJoined) {
-                document.getElementById('join-section').style.display = 'none';
-                showSuccessService();
-            } else {
-                alert(currentLang === 'bn' ? 'আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি! আগে জয়েন করুন।' : 'You have not joined our channel yet!');
-            }
-        });
+let appSettings = {
+    bkashNumber: "01700000000",
+    nagadNumber: "01700000000",
+    binanceAddress: "123456789 (Pay ID)",
+    targetBotUrl: "https://t.me/YourTargetBotUsername",
+    requiredChannel: "@nexuslink0",
+    channelLink: "https://t.me/nexuslink0",
+    bannerAdText: "🔥 বিশেষ ছাড়! ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন।",
+    bannerAdUrl: "https://example.com",
+    thirdPartyScript: ""
 };
 
-function showSuccessService() {
-    document.getElementById('service-section').style.display = 'block';
-    const redirectToTarget = () => {
-        if (targetUrl.includes('t.me')) {
-            tg.openTelegramLink(targetUrl);
-        } else {
-            tg.openLink(targetUrl);
+// 🔍 Channel Join Status Checker
+async function checkChannelMembership(userId) {
+    try {
+        if (!appSettings.requiredChannel) return true;
+        
+        let targetChannel = appSettings.requiredChannel.trim();
+        
+        if (!targetChannel.startsWith('@') && !targetChannel.startsWith('-100')) {
+            targetChannel = '@' + targetChannel;
         }
+
+        const member = await bot.getChatMember(targetChannel, userId);
+        return ['creator', 'administrator', 'member'].includes(member.status);
+    } catch (error) {
+        console.error("Channel Check Failed Reason:", error.message);
+        return false;
+    }
+}
+
+// Bot Command Handler
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text ? msg.text.toLowerCase() : '';
+
+    if (text.includes('find my device') || text === '/start') {
+        const caption = `📢 **Welcome to Find My Device Service**\n\n` +
+                        `ডিভাইস ট্র্যাক করার জন্য সেবাটি ব্যবহার করতে নিচে ক্লিক করুন:`;
+
+        bot.sendMessage(chatId, caption, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🚀 Open Find My Device App", web_app: { url: WEBAPP_URL } }]
+                ]
+            }
+        });
+    }
+});
+
+// API Routes
+app.get('/api/init-app/:userId', async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const isApproved = userAccess.get(userId) || false;
+    const isJoined = await checkChannelMembership(userId);
+
+    res.json({
+        approved: isApproved,
+        isJoined: isJoined,
+        appSettings: appSettings
+    });
+});
+
+app.get('/api/check-join/:userId', async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const isJoined = await checkChannelMembership(userId);
+    res.json({ isJoined: isJoined });
+});
+
+app.post('/api/submit-payment', async (req, res) => {
+    const { userId, userName, phone, method, trxId } = req.body;
+
+    if (!userId || !trxId || !phone) {
+        return res.status(400).json({ success: false, error: 'সবগুলো তথ্য সঠিকভাবে দিন!' });
+    }
+
+    const newPayment = {
+        id: Date.now(),
+        userId: parseInt(userId),
+        userName: userName || 'Unknown',
+        phone: phone,
+        method: method,
+        trxId: trxId,
+        status: 'pending',
+        date: new Date().toLocaleString()
     };
-    document.getElementById('go-to-bot-btn').onclick = redirectToTarget;
-    // অটো রিডাইরেক্ট তুলে দেওয়া হলো যেন ইউজার নিজে বাটন প্রেস করে যেতে পারে
-}
 
-function submitPayment() {
-    const phone = document.getElementById('user-phone').value;
-    const method = document.getElementById('pay-method').value;
-    const trxId = document.getElementById('trx-id').value;
+    payments.unshift(newPayment);
 
-    if (!phone || !trxId) return alert('অ্যাকাউন্ট তথ্য এবং TrxID প্রদান করুন!');
+    // Admin Bot Inbox Notification Message
+    try {
+        await bot.sendMessage(ADMIN_ID,
+            `🔔 **নতুন সাবস্ক্রিপশন পেমেন্ট রিকোয়েস্ট!**\n\n` +
+            `👤 **User:** ${userName} (\`${userId}\`)\n` +
+            `📱 **Phone/Account:** \`${phone}\`\n` +
+            `💳 **Method:** ${method}\n` +
+            `🧾 **TrxID/TxID:** \`${trxId}\`\n\n` +
+            `অনুমোদনের জন্য মিনি অ্যাপের অ্যাডমিন প্যানেল ভিজিট করুন।`,
+            { 
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "💳 Subscription Panel", web_app: { url: WEBAPP_URL } }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error("Admin Notify Error:", err.message);
+    }
 
-    fetch('/api/submit-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId: user.id,
-            userName: user.first_name,
-            phone: phone,
-            method: method,
-            trxId: trxId
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById('pay-msg').innerText = data.message;
-    });
-}
+    res.json({ success: true, message: 'পেমেন্ট সাবমিট করা হয়েছে! অ্যাডমিন ভেরিফাই করলে সেবা আনলক হবে।' });
+});
 
-function loadAdminDataWithData(data) {
-    const tbody = document.getElementById('payment-table-body');
-    tbody.innerHTML = '';
+app.get('/api/admin/payments/:adminId', (req, res) => {
+    const adminId = parseInt(req.params.adminId);
+    if (adminId !== ADMIN_ID) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+    res.json({ payments: payments, appSettings: appSettings });
+});
 
-    data.payments.forEach(p => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><b>${p.userName}</b><br>${p.phone}<br><small>(${p.userId})</small></td>
-            <td><b>${p.method}</b><br><code>${p.trxId}</code></td>
-            <td><span class="badge bg-${p.status}">${p.status}</span></td>
-            <td>
-                ${p.status === 'pending' ? `
-                    <button class="btn-approve" onclick="handleAction(${p.id}, 'approve')">Approve</button>
-                    <button class="btn-reject" onclick="handleAction(${p.id}, 'reject')">Reject</button>
-                ` : 'N/A'}
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+app.post('/api/admin/action', async (req, res) => {
+    const { adminId, paymentId, action } = req.body;
 
-    document.getElementById('admin-bkash').value = data.appSettings.bkashNumber || '';
-    document.getElementById('admin-nagad').value = data.appSettings.nagadNumber || '';
-    document.getElementById('admin-binance').value = data.appSettings.binanceAddress || '';
-    document.getElementById('admin-target-bot').value = data.appSettings.targetBotUrl || '';
-    document.getElementById('admin-req-channel').value = data.appSettings.requiredChannel || '';
-    document.getElementById('admin-chan-link').value = data.appSettings.channelLink || '';
-    document.getElementById('admin-ad-text').value = data.appSettings.bannerAdText || '';
-    document.getElementById('admin-ad-url').value = data.appSettings.bannerAdUrl || '';
-    document.getElementById('admin-ad-script').value = data.appSettings.thirdPartyScript || '';
-}
+    if (parseInt(adminId) !== ADMIN_ID) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
 
-function handleAction(paymentId, action) {
-    fetch('/api/admin/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user.id, paymentId: paymentId, action: action })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            location.reload();
+    const payIndex = payments.findIndex(p => p.id === paymentId);
+    if (payIndex === -1) {
+        return res.status(404).json({ error: 'Payment record not found' });
+    }
+
+    const targetPayment = payments[payIndex];
+
+    if (action === 'approve') {
+        targetPayment.status = 'approved';
+        userAccess.set(targetPayment.userId, true);
+
+        try {
+            await bot.sendMessage(targetPayment.userId, 
+                '🎉 **অভিনন্দন! আপনার পেমেন্ট সফল হয়েছে।**\n\nঅ্যাপে ঢুকে চ্যানেল জয়েন ভেরিফাই করে মূল সার্ভিস ব্যবহার করুন।');
+        } catch (e) {
+            console.error("User notify error:", e.message);
         }
-    });
-}
+    } else if (action === 'reject') {
+        targetPayment.status = 'rejected';
+        userAccess.set(targetPayment.userId, false);
 
-function saveAdminSettings() {
-    const bkash = document.getElementById('admin-bkash').value;
-    const nagad = document.getElementById('admin-nagad').value;
-    const binance = document.getElementById('admin-binance').value;
-    const targetBot = document.getElementById('admin-target-bot').value;
-    const reqChan = document.getElementById('admin-req-channel').value;
-    const chanLink = document.getElementById('admin-chan-link').value;
-    const text = document.getElementById('admin-ad-text').value;
-    const url = document.getElementById('admin-ad-url').value;
-    const script = document.getElementById('admin-ad-script').value;
-
-    fetch('/api/admin/update-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            adminId: user.id,
-            bkashNumber: bkash,
-            nagadNumber: nagad,
-            binanceAddress: binance,
-            targetBotUrl: targetBot,
-            requiredChannel: reqChan,
-            channelLink: chanLink,
-            bannerAdText: text,
-            bannerAdUrl: url,
-            thirdPartyScript: script
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            alert('সব সেটিংস সফলভাবে সেভ করা হয়েছে!');
-            location.reload();
+        try {
+            await bot.sendMessage(targetPayment.userId, '❌ দুঃখিত, আপনার পেমেন্ট রিকোয়েস্টটি বাতিল করা হয়েছে। সঠিক TrxID দিন।');
+        } catch (e) {
+            console.error("User notify error:", e.message);
         }
-    });
-}
+    }
 
-function injectScript(scriptHtml) {
-    const container = document.getElementById('third-party-ads');
-    const range = document.createRange();
-    range.setStart(container, 0);
-    container.appendChild(range.createContextualFragment(scriptHtml));
-}
+    res.json({ success: true, payment: targetPayment });
+});
 
-initApp();
+app.post('/api/admin/update-settings', (req, res) => {
+    const { adminId, bkashNumber, nagadNumber, binanceAddress, targetBotUrl, requiredChannel, channelLink, bannerAdText, bannerAdUrl, thirdPartyScript } = req.body;
+
+    if (parseInt(adminId) !== ADMIN_ID) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    appSettings.bkashNumber = bkashNumber || appSettings.bkashNumber;
+    appSettings.nagadNumber = nagadNumber || appSettings.nagadNumber;
+    appSettings.binanceAddress = binanceAddress || appSettings.binanceAddress;
+    appSettings.targetBotUrl = targetBotUrl || appSettings.targetBotUrl;
+    appSettings.requiredChannel = requiredChannel || appSettings.requiredChannel;
+    appSettings.channelLink = channelLink || appSettings.channelLink;
+    appSettings.bannerAdText = bannerAdText || appSettings.bannerAdText;
+    appSettings.bannerAdUrl = bannerAdUrl || appSettings.bannerAdUrl;
+    appSettings.thirdPartyScript = thirdPartyScript !== undefined ? thirdPartyScript : appSettings.thirdPartyScript;
+
+    res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
+});
+
+app.use(express.static('.'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+        
