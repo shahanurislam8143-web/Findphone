@@ -7,9 +7,9 @@ app.use(express.json());
 app.use(cors());
 
 // --- ⚙️ শুধুমাত্র এই ৩টি কোডে থাকবে ⚙️ ---
-const TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
+const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
 const ADMIN_ID = 7779071715; 
-const WEBAPP_URL = 'https://your-domain.com'; 
+const WEBAPP_URL = 'https://findphone-rxl7.onrender.com'; 
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
