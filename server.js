@@ -6,17 +6,17 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve Static Files
+// Static Files Serve Line
 app.use(express.static(__dirname));
 
-// Credentials & Configurations
+// 🔑 Your Exact Credentials & Configurations
 const TOKEN = '8864054482:AAHHLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
 const ADMIN_ID = 7779071715; 
 const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Memory Database
+// Memory Storage
 let appSettings = {
   bkashNumber: "01700000000",
   nagadNumber: "01700000000",
@@ -24,7 +24,7 @@ let appSettings = {
   targetBotUrl: "https://t.me/YourTargetBotUsername",
   requiredChannel: "@nexuslink0",
   channelLink: "https://t.me/nexuslink0",
-  bannerAdText: "🔥 SpoNSor Website dekhe offer upobhog korun!",
+  bannerAdText: "🔥 স্পন্সর ওয়েবসাইট দেখে অফার উপভোগ করুন!",
   bannerAdUrl: "https://example.com",
   thirdPartyScript: ""
 };
@@ -33,7 +33,7 @@ let bannedUsers = new Set();
 let approvedUsers = new Set([ADMIN_ID]);
 let payments = [];
 
-// Helper Function: Check Telegram Channel Membership
+// Helper: Check Telegram Channel Membership
 async function checkChannelMembership(userId) {
   try {
     if (!appSettings.requiredChannel) return true;
@@ -45,23 +45,23 @@ async function checkChannelMembership(userId) {
   }
 }
 
-// Serve Main HTML File
+// Serve Main HTML
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Bot Command Handler
+// Bot Command Listener
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
 
   if (bannedUsers.has(userId)) {
-    return bot.sendMessage(chatId, "❌ **Apnar account-ti ban kora hoyeche!**");
+    return bot.sendMessage(chatId, "❌ **আপনার অ্যাকাউন্টটি ব্যান করা হয়েছে!**");
   }
 
   if (text.includes('find my device') || text === '/start') {
-    bot.sendMessage(chatId, `📱 **Welcome to Find My Device Service**\n\nApp-ti bebohar korte nicher button-e chap din:`, {
+    bot.sendMessage(chatId, `📱 **Welcome to Find My Device Service**\n\nঅ্যাপটি ব্যবহার করতে নিচের বাটনে চাপ দিন:`, {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -90,7 +90,7 @@ app.get('/api/init-app/:userId', async (req, res) => {
   });
 });
 
-// 🟢 2. Check Channel Membership
+// 🟢 2. Check Channel Join Status
 app.get('/api/check-join/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
   const isJoined = await checkChannelMembership(userId);
@@ -102,7 +102,7 @@ app.post('/api/submit-payment', (req, res) => {
   const { userId, userName, phone, method, trxId } = req.body;
 
   if (!userId || !trxId) {
-    return res.status(400).json({ success: false, message: "TrxID ebong details sob prodan korun!" });
+    return res.status(400).json({ success: false, message: "TrxID এবং ইনফরমেশন প্রদান করুন!" });
   }
 
   const newPayment = {
@@ -117,13 +117,13 @@ app.post('/api/submit-payment', (req, res) => {
 
   payments.push(newPayment);
 
-  // Send Alert to Admin in Telegram
+  // Send Notification to Admin in Telegram
   bot.sendMessage(ADMIN_ID, 
-    `🔔 **Nutun Payment Request!**\n\n👤 **User:** ${userName} (\`${userId}\`)\n📱 **Phone:** \`${phone}\`\n💳 **Method:** ${method}\n🧾 **TrxID:** \`${trxId}\``, 
+    `🔔 **নতুন পেমেন্ট রিকোয়েস্ট!**\n\n👤 **User:** ${userName} (\`${userId}\`)\n📱 **Phone:** \`${phone}\`\n💳 **Method:** ${method}\n🧾 **TrxID:** \`${trxId}\``, 
     { parse_mode: 'Markdown' }
   );
 
-  res.json({ success: true, message: "Payment safalvabe joma hoyeche! Admin review kore confirm korben." });
+  res.json({ success: true, message: "পেমেন্ট সফলভাবে জমা হয়েছে! অ্যাডমিন রিভিউ করে কনফার্ম করবেন।" });
 });
 
 // 🟢 4. Load Admin Payments Table & Settings
@@ -150,18 +150,9 @@ app.post('/api/admin/action', (req, res) => {
 
     if (action === 'approve') {
       approvedUsers.add(payment.userId);
-      
-      // Direct Link Button Message to User
-      bot.sendMessage(payment.userId, "🎉 **Apnar payment safalvabe anumodito hoyeche!**\n\nNicher button-e click kore mool bot-e probesh korun:", {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🚀 Open Premium Bot", url: appSettings.targetBotUrl || "https://t.me/nexuslink0" }]
-          ]
-        }
-      });
+      bot.sendMessage(payment.userId, "🎉 **আপনার পেমেন্ট সফলভাবে অনুমোদিত হয়েছে!** আপনি এখন সার্ভিস ব্যবহার করতে পারবেন।");
     } else {
-      bot.sendMessage(payment.userId, "❌ **Apnar dewa payment request-ti batil kora hoyeche.** Sothik Transaction ID shoho abar chesta korun.");
+      bot.sendMessage(payment.userId, "❌ **আপনার দেওয়া পেমেন্ট রিকোয়েস্টটি বাতিল করা হয়েছে।** সঠিক ট্রানজেকশন আইডিসহ আবার চেষ্টা করুন।");
     }
 
     res.json({ success: true });
@@ -188,10 +179,10 @@ app.post('/api/admin/send-message', async (req, res) => {
     } else if (messageText && messageText.trim() !== "") {
       await bot.sendMessage(targetId, messageText, { parse_mode: 'Markdown' });
     }
-    res.json({ success: true, message: "Message/Chobi safalvabe user-er Telegram-e pathano hoyeche!" });
+    res.json({ success: true, message: "মেসেজ/ছবি সফলভাবে ইউজারের টেলিগ্রামে পাঠানো হয়েছে!" });
   } catch (error) {
     console.error("Send message error:", error);
-    res.json({ success: false, message: "Message pathate shomossha hoyeche. User ID poriksha korun." });
+    res.json({ success: false, message: "মেসেজ পাঠাতে সমস্যা হয়েছে। User ID পরীক্ষা করুন।" });
   }
 });
 
@@ -236,3 +227,4 @@ app.post('/api/admin/update-settings', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    
