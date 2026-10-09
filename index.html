@@ -198,7 +198,7 @@
             <a id="ad-link" href="#" target="_blank">[Visit]</a>
         </div>
 
-        <!-- 🔒 ১. পেমেন্ট ফর্ম -->
+        <!-- 🔒 1. Payment Form Section -->
         <div id="payment-section" class="card" style="display: none;">
             <h3 style="text-align: center; margin-bottom: 8px;" data-bn="🔒 প্রিমিয়াম সেবা এক্সেস" data-en="🔒 Premium Service Access">🔒 প্রিমিয়াম সেবা এক্সেস</h3>
             <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 12px;" data-bn="Find My Device সার্ভিসটি ব্যবহার করতে পেমেন্ট করুন।" data-en="Pay to access Find My Device Service.">Find My Device সার্ভিসটি ব্যবহার করতে পেমেন্ট করুন।</p>
@@ -226,7 +226,7 @@
             <div id="pay-msg" style="margin-top: 10px; text-align: center; font-size: 13px;"></div>
         </div>
 
-        <!-- 📢 ২. চ্যানেল জয়েন বক্স -->
+        <!-- 📢 2. Channel Join Section -->
         <div id="join-section" class="card" style="display: none;">
             <div class="join-box">
                 <h3 style="margin-bottom: 8px;" data-bn="📢 আমাদের চ্যানেলে জয়েন করুন" data-en="📢 Join Our Telegram Channel">📢 আমাদের চ্যানেলে জয়েন করুন</h3>
@@ -236,7 +236,7 @@
             </div>
         </div>
 
-        <!-- 🎯 ৩. পেমেন্ট সফল ও জয়েন ভেরিফাই সম্পন্ন -->
+        <!-- 🎯 3. Redirect to Target Bot Section -->
         <div id="service-section" class="card" style="display: none;">
             <div class="success-box">
                 <h3 style="color: #34d399; margin-bottom: 8px;" data-bn="🎉 পেমেন্ট ও জয়েন ভেরিফাই সফল!" data-en="🎉 Payment & Verification Successful!">🎉 পেমেন্ট ও জয়েন ভেরিফাই সফল!</h3>
@@ -245,7 +245,7 @@
             </div>
         </div>
 
-        <!-- 🛠️ ৪. অ্যাডমিন প্যানেল -->
+        <!-- 🛠️ 4. Full Admin Management Panel -->
         <div id="admin-panel" class="card" style="display: none;">
             <h3 style="color: #a855f7; margin-bottom: 12px;"><i class="fa-solid fa-user-shield"></i> Admin Management Panel</h3>
             
@@ -266,13 +266,13 @@
 
             <hr>
 
-            <!-- 📩 মেসেজ ও ছবি সেন্ডিং -->
+            <!-- Message & Photo Sending Box -->
             <h4 style="font-size: 13px; color: #fbbf24;">📩 Send Direct Message / Photo to User</h4>
             <label>Target User Telegram ID:</label>
             <input type="number" id="msg-target-id" placeholder="e.g. 7779071715">
 
             <label>Message Text:</label>
-            <textarea id="msg-text" rows="3" placeholder="মেসেজ লিখুন..."></textarea>
+            <textarea id="msg-text" rows="3" placeholder="Message likhun..."></textarea>
 
             <label>Photo Direct URL (Optional):</label>
             <input type="text" id="msg-photo-url" placeholder="https://example.com/photo.jpg">
@@ -281,7 +281,7 @@
 
             <hr>
 
-            <!-- 🚫 ইউজার কন্ট্রোল -->
+            <!-- User Ban/Unban Box -->
             <h4 style="font-size: 13px; color: #ef4444;">🚫 User Ban & Access Control</h4>
             <label>Target User ID:</label>
             <input type="number" id="control-target-id" placeholder="e.g. 123456789">
@@ -303,10 +303,10 @@
             <label>Binance Pay ID / TRC20 Address:</label>
             <input type="text" id="admin-binance">
 
-            <label>Target Bot Link (পেমেন্টের পর ইউজার যেখানে যাবে):</label>
+            <label>Target Bot Link (Payment-er por user jekhane jabe):</label>
             <input type="text" id="admin-target-bot" placeholder="https://t.me/YourTargetBotUsername">
 
-            <label>Required Channel Username (যেমন: @nexuslink0):</label>
+            <label>Required Channel Username (Jemon: @nexuslink0):</label>
             <input type="text" id="admin-req-channel" placeholder="@nexuslink0">
 
             <label>Telegram Channel Invite Link (Force Join):</label>
@@ -348,7 +348,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.appSettings) {
-                    targetUrl = data.appSettings.targetBotUrl;
+                    targetUrl = data.appSettings.targetBotUrl || "https://t.me/nexuslink0";
                     document.getElementById('show-bkash').innerText = data.appSettings.bkashNumber || 'N/A';
                     document.getElementById('show-nagad').innerText = data.appSettings.nagadNumber || 'N/A';
                     document.getElementById('show-binance').innerText = data.appSettings.binanceAddress || 'N/A';
@@ -367,7 +367,9 @@
                     }
                 }
 
+                // Payment approved hole Target Bot Screen-e niye jabe
                 if (data.approved) {
+                    document.getElementById('payment-section').style.display = 'none';
                     if (data.isJoined) {
                         showSuccessService();
                     } else {
@@ -391,22 +393,26 @@
                         document.getElementById('join-section').style.display = 'none';
                         showSuccessService();
                     } else {
-                        alert(currentLang === 'bn' ? 'আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি!' : 'You have not joined our channel yet!');
+                        alert(currentLang === 'bn' ? 'Apni akhono amader channel-e join korneni!' : 'You have not joined our channel yet!');
                     }
                 });
         };
 
         function showSuccessService() {
+            document.getElementById('payment-section').style.display = 'none';
+            document.getElementById('join-section').style.display = 'none';
             document.getElementById('service-section').style.display = 'block';
+
             const redirectToTarget = () => {
-                if (targetUrl.includes('t.me')) {
+                if (targetUrl && targetUrl.includes('t.me')) {
                     tg.openTelegramLink(targetUrl);
-                } else {
+                } else if (targetUrl) {
                     tg.openLink(targetUrl);
+                } else {
+                    alert('Target Bot link set kora nei! Admin panel theke link din.');
                 }
             };
             document.getElementById('go-to-bot-btn').onclick = redirectToTarget;
-            setTimeout(redirectToTarget, 3000);
         }
 
         function injectScript(scriptHtml) {
@@ -421,7 +427,7 @@
             const method = document.getElementById('pay-method').value;
             const trxId = document.getElementById('trx-id').value;
 
-            if (!phone || !trxId) return alert('অ্যাকাউন্ট তথ্য এবং TrxID প্রদান করুন!');
+            if (!phone || !trxId) return alert('Account info ebong TrxID prodan korun!');
 
             fetch('/api/submit-payment', {
                 method: 'POST',
@@ -495,7 +501,7 @@
             const imageUrl = document.getElementById('msg-photo-url').value;
 
             if (!targetUserId || (!messageText && !imageUrl)) {
-                return alert('ইউজার ID এবং মেসেজ বা ছবির লিংক প্রদান করুন!');
+                return alert('User ID ebong message ba chobir link prodan korun!');
             }
 
             fetch('/api/admin/send-message', {
@@ -510,7 +516,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert(data.message || 'রেসপন্স পাওয়া গেছে');
+                alert(data.message || 'Response pawa geche');
                 if(data.success) {
                     document.getElementById('msg-text').value = '';
                     document.getElementById('msg-photo-url').value = '';
@@ -520,7 +526,7 @@
 
         function handleUserControl(action) {
             const targetUserId = document.getElementById('control-target-id').value;
-            if (!targetUserId) return alert('Target User ID প্রদান করুন!');
+            if (!targetUserId) return alert('Target User ID prodan korun!');
 
             fetch('/api/admin/user-control', {
                 method: 'POST',
@@ -533,7 +539,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert(`Action [${action}] সফল হয়েছে!`);
+                alert(`Action [${action}] safal hoyeche!`);
             });
         }
 
@@ -567,7 +573,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    alert('সব সেটিংস সফলভাবে সেভ করা হয়েছে!');
+                    alert('Sob settings safalvabe save kora hoyeche!');
                     location.reload();
                 }
             });
