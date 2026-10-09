@@ -3,294 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus Link - Mini App</title>
+  <title>Nexus Link - Advanced Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
       --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
-      --glass-bg: rgba(255, 255, 255, 0.07);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --accent-color: #6366f1;
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.15);
       --accent-glow: linear-gradient(135deg, #6366f1, #a855f7);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --success: #10b981;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 440px; }
 
-    body {
-      background: var(--bg-gradient);
-      color: var(--text-main);
-      min-height: 100vh;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .glass-card { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(16px); border-radius: 20px; padding: 18px; margin-bottom: 16px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
 
-    .container {
-      width: 100%;
-      max-width: 440px;
-    }
+    .ad-banner { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2)); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 14px; padding: 12px; text-align: center; font-size: 14px; margin-bottom: 16px; }
+    .ad-banner a { color: #fbbf24; font-weight: bold; text-decoration: none; }
 
-    /* Top Bar */
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; margin-top: 8px; text-decoration: none; }
+    .btn-primary { background: var(--accent-glow); color: #fff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid var(--glass-border); }
 
-    .lang-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--glass-border);
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-    }
+    .input-group { margin-bottom: 10px; }
+    .input-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 13px; outline: none; }
 
-    .lang-btn:active {
-      transform: scale(0.95);
-    }
-
-    /* Glass Card */
-    .glass-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 24px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    /* Ad Banner */
-    .ad-banner {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 16px;
-      padding: 12px;
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
-
-    .ad-banner a {
-      color: #fbbf24;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    /* Main Box */
-    .channel-box {
-      text-align: center;
-      padding: 10px 0;
-    }
-
-    .channel-icon {
-      font-size: 40px;
-      background: var(--accent-glow);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 12px;
-    }
-
-    .channel-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .channel-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-    }
-
-    /* Action Buttons */
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.3s ease;
-      text-decoration: none;
-    }
-
-    .btn-primary {
-      background: var(--accent-glow);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-primary:active {
-      transform: translateY(2px);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border: 1px solid var(--glass-border);
-    }
-
-    /* Admin Section */
-    .admin-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #a855f7;
-    }
-
-    .input-group {
-      margin-bottom: 12px;
-    }
-
-    .input-group label {
-      display: block;
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--glass-border);
-      background: rgba(0, 0, 0, 0.2);
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .input-group input:focus {
-      border-color: var(--accent-color);
-    }
-
-    /* Modal Alert */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal {
-      background: #1e1b4b;
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 24px;
-      width: 85%;
-      max-width: 320px;
-      text-align: center;
-    }
-
-    .modal p {
-      margin: 16px 0;
-      font-size: 15px;
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #1e1b4b; border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px; width: 85%; max-width: 320px; text-align: center; }
   </style>
 </head>
 <body>
 
+  <div id="adScriptsContainer"></div>
+
   <div class="container">
-    <!-- Top Header -->
     <div class="header-bar">
-      <div style="font-weight: 700; font-size: 18px; letter-spacing: 0.5px;">⚡ NEXUS LINK</div>
-      <button class="lang-btn" onclick="toggleLang()"><i class="fa-solid fa-globe"></i> <span id="langText">English</span></button>
+      <div style="font-weight: 700; font-size: 18px;">⚡ NEXUS APP</div>
+      <span id="subStatusBadge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 12px; font-size: 12px;">Unsubscribed</span>
     </div>
 
-    <!-- Ad Banner -->
+    <!-- Banner Ads -->
     <div class="ad-banner" id="adBox">
-      🔥 <span id="adText">বিশেষ ছাড়! ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন।</span> 
+      🔥 <span id="adText">বিশেষ স্পন্সর ওয়েবসাইট দেখুন!</span> 
       <a href="#" id="adLink" target="_blank">[Visit]</a>
     </div>
 
-    <!-- Join Verification Box -->
-    <div class="glass-card channel-box">
-      <div class="channel-icon"><i class="fa-solid fa-bullhorn"></i></div>
-      <div class="channel-title" id="txtTitle">আমাদের চ্যানেলে যুক্ত হন</div>
-      <div class="channel-desc" id="txtDesc">বটের সব সার্ভিস ব্যবহারের জন্য অফিসিয়াল চ্যানেলে জয়েন থাকা বাধ্যতামূলক।</div>
-      
-      <div class="btn-group">
-        <a id="btnJoinChannel" href="https://t.me/nexuslink0" target="_blank" class="btn btn-secondary">
-          <i class="fa-brands fa-telegram"></i> <span id="txtJoinBtn">Join Channel</span>
-        </a>
-        <button class="btn btn-primary" onclick="verifyJoin()">
-          <i class="fa-solid fa-circle-check"></i> <span id="txtVerifyBtn">Verify Join & Access</span>
-        </button>
-      </div>
+    <!-- Banned Screen -->
+    <div class="glass-card" id="bannedCard" style="display: none; text-align: center; color: #ef4444;">
+      <i class="fa-solid fa-ban" style="font-size: 48px; margin-bottom: 10px;"></i>
+      <h3>আপনার অ্যাকাউন্ট ব্যান করা হয়েছে!</h3>
     </div>
 
-    <!-- Admin Panel (Auto Visible for Admin UID) -->
-    <div class="glass-card" id="adminPanel" style="display: none;">
-      <div class="admin-title"><i class="fa-solid fa-user-shield"></i> Admin Settings</div>
+    <!-- Force Join Section -->
+    <div class="glass-card" id="joinCard">
+      <h3 style="margin-bottom: 8px; text-align: center;"><i class="fa-solid fa-bullhorn"></i> চ্যানেলে যুক্ত হন</h3>
+      <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 14px;">বট ব্যবহার করতে অফিসিয়াল চ্যানেলে থাকা বাধ্যতামূলক।</p>
+      <button class="btn btn-secondary" onclick="openChannel()"><i class="fa-brands fa-telegram"></i> Join Channel</button>
+      <button class="btn btn-primary" onclick="verifyJoin()"><i class="fa-solid fa-circle-check"></i> Verify Membership</button>
+    </div>
+
+    <!-- Video Ad Container -->
+    <div class="glass-card" id="videoAdBox" style="display: none; text-align: center;">
+      <h4>📺 Watch Sponsored Video Ad</h4>
+      <div id="videoAdArea" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Subscription Purchase Box -->
+    <div class="glass-card" id="subCard">
+      <h3><i class="fa-solid fa-gem"></i> Buy Subscription</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin: 6px 0;">মূল্য: <span id="subPriceText" style="color: #a855f7; font-weight: bold;">100 BDT</span></p>
       
       <div class="input-group">
-        <label>bKash Number</label>
-        <input type="text" id="admBkash">
+        <label>পেমেন্ট মেথড বেছে নিন</label>
+        <select id="payMethod">
+          <option value="bkash">bKash (Personal)</option>
+          <option value="nagad">Nagad (Personal)</option>
+          <option value="binance">Binance Pay ID</option>
+        </select>
       </div>
+      <p style="font-size: 11px; color: #fbbf24; margin-bottom: 8px;" id="paymentNumberInfo">bKash: 01700000000</p>
+      
       <div class="input-group">
-        <label>Nagad Number</label>
-        <input type="text" id="admNagad">
+        <label>Transaction ID (TrxID) / Pay ID</label>
+        <input type="text" id="payTrxId" placeholder="Enter Transaction ID">
       </div>
-      <div class="input-group">
-        <label>Required Channel (@username)</label>
-        <input type="text" id="admChannel">
-      </div>
-      <div class="input-group">
-        <label>Ad Text</label>
-        <input type="text" id="admAdText">
-      </div>
-      <div class="input-group">
-        <label>Ad Link</label>
-        <input type="text" id="admAdLink">
-      </div>
+      <button class="btn btn-primary" onclick="submitSubscription()"><i class="fa-solid fa-paper-plane"></i> Submit Payment</button>
+    </div>
 
-      <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveAdminSettings()">
-        <i class="fa-solid fa-floppy-disk"></i> Save Settings
-      </button>
+    <!-- Admin Panel -->
+    <div class="glass-card" id="adminPanel" style="display: none;">
+      <h3 style="color: #a855f7; margin-bottom: 12px;"><i class="fa-solid fa-user-shield"></i> Admin Control Panel</h3>
+      
+      <div class="input-group"><label>bKash Number</label><input type="text" id="admBkash"></div>
+      <div class="input-group"><label>Nagad Number</label><input type="text" id="admNagad"></div>
+      <div class="input-group"><label>Binance Address</label><input type="text" id="admBinance"></div>
+      <div class="input-group"><label>Sub Price</label><input type="text" id="admPrice"></div>
+      <div class="input-group"><label>Channel Username (@)</label><input type="text" id="admChannel"></div>
+      <div class="input-group"><label>Banner Ad Text</label><input type="text" id="admAdText"></div>
+      <div class="input-group"><label>Banner Ad Link</label><input type="text" id="admAdLink"></div>
+      
+      <hr style="border: 0.5px solid var(--glass-border); margin: 12px 0;">
+      <h4 style="font-size: 12px; color: #fbbf24;">📺 Ads Integration Scripts</h4>
+      <div class="input-group"><label>Social Bar Script URL</label><input type="text" id="admSocialScript"></div>
+      <div class="input-group"><label>Popunder Script URL</label><input type="text" id="admPopScript"></div>
+      <div class="input-group"><label>Video Ad Script URL</label><input type="text" id="admVideoScript"></div>
+
+      <button class="btn btn-primary" onclick="saveAdminSettings()"><i class="fa-solid fa-floppy-disk"></i> Save All Settings</button>
+
+      <hr style="border: 0.5px solid var(--glass-border); margin: 12px 0;">
+      <h4 style="font-size: 12px; color: #ef4444;">🚫 User Ban & Control</h4>
+      <div class="input-group"><label>Target User ID</label><input type="number" id="targetUid" placeholder="e.g. 123456789"></div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.2);" onclick="controlUser('ban')">Ban</button>
+        <button class="btn btn-secondary" onclick="controlUser('unban')">Unban</button>
+        <button class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.2);" onclick="controlUser('add_sub')">+ Sub</button>
+      </div>
     </div>
   </div>
 
-  <!-- Custom Alert Modal -->
   <div class="modal-overlay" id="customModal">
     <div class="modal">
-      <i class="fa-solid fa-circle-info" style="font-size: 36px; color: #a855f7;"></i>
-      <p id="modalMsg">ম্যাসেজ</p>
+      <i class="fa-solid fa-circle-info" style="font-size: 32px; color: #a855f7;"></i>
+      <p id="modalMsg" style="margin: 14px 0; font-size: 14px;"></p>
       <button class="btn btn-primary" onclick="closeModal()">OK</button>
     </div>
   </div>
@@ -298,56 +138,114 @@
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
+    const userId = tg.initDataUnsafe?.user?.id || 7779071715;
+    let appSettings = {};
 
-    const userId = tg.initDataUnsafe?.user?.id || 7779071715; // default fallback
-    let currentLang = 'bn';
-
-    // Load initial app data
     async function loadAppData() {
       try {
         const res = await fetch(`/api/init-app/${userId}`);
         const data = await res.json();
 
-        if (data.isApproved) {
-          showAlert("অভিনন্দন! আপনি সফলভাবে অ্যাক্সেস পেয়েছেন।");
+        if (data.isBanned) {
+          document.getElementById('bannedCard').style.display = 'block';
+          document.getElementById('joinCard').style.display = 'none';
+          document.getElementById('subCard').style.display = 'none';
+          return;
         }
 
-        // Apply Settings
-        if (data.appSettings) {
-          const set = data.appSettings;
-          document.getElementById('adText').innerText = set.bannerAdText || '';
-          document.getElementById('adLink').href = set.bannerAdUrl || '#';
-          document.getElementById('btnJoinChannel').href = set.channelLink || '#';
-          
-          // Populate Admin Inputs
-          document.getElementById('admBkash').value = set.bkashNumber || '';
-          document.getElementById('admNagad').value = set.nagadNumber || '';
-          document.getElementById('admChannel').value = set.requiredChannel || '';
-          document.getElementById('admAdText').value = set.bannerAdText || '';
-          document.getElementById('admAdLink').value = set.bannerAdUrl || '';
+        appSettings = data.appSettings || {};
+
+        if (data.isSubscribed) {
+          document.getElementById('subStatusBadge').innerText = "Subscribed (Active)";
+          document.getElementById('subStatusBadge').style.background = "rgba(16, 185, 129, 0.2)";
+          document.getElementById('subStatusBadge').style.color = "#34d399";
         }
 
+        // Ads script injection
+        injectAdsScripts(appSettings);
+
+        // Fill admin forms
         if (data.isAdmin) {
           document.getElementById('adminPanel').style.display = 'block';
+          document.getElementById('admBkash').value = appSettings.bkashNumber || '';
+          document.getElementById('admNagad').value = appSettings.nagadNumber || '';
+          document.getElementById('admBinance').value = appSettings.binanceAddress || '';
+          document.getElementById('admPrice').value = appSettings.subPrice || '';
+          document.getElementById('admChannel').value = appSettings.requiredChannel || '';
+          document.getElementById('admAdText').value = appSettings.bannerAdText || '';
+          document.getElementById('admAdLink').value = appSettings.bannerAdUrl || '';
+          document.getElementById('admSocialScript').value = appSettings.socialBarScript || '';
+          document.getElementById('admPopScript').value = appSettings.popunderScript || '';
+          document.getElementById('admVideoScript').value = appSettings.videoAdScript || '';
         }
 
-      } catch (err) {
-        console.error("Data load failed", err);
+        updatePaymentInfo();
+      } catch (e) { console.error(e); }
+    }
+
+    function injectAdsScripts(set) {
+      const container = document.getElementById('adScriptsContainer');
+      container.innerHTML = '';
+      
+      if (set.socialBarScript) {
+        const s = document.createElement('script'); s.src = set.socialBarScript; container.appendChild(s);
+      }
+      if (set.popunderScript) {
+        const s = document.createElement('script'); s.src = set.popunderScript; container.appendChild(s);
+      }
+      if (set.videoAdScript) {
+        document.getElementById('videoAdBox').style.display = 'block';
+        const s = document.createElement('script'); s.src = set.videoAdScript;
+        document.getElementById('videoAdArea').appendChild(s);
       }
     }
 
+    document.getElementById('payMethod').addEventListener('change', updatePaymentInfo);
+
+    function updatePaymentInfo() {
+      const m = document.getElementById('payMethod').value;
+      let info = "";
+      if (m === 'bkash') info = "bKash: " + (appSettings.bkashNumber || '');
+      if (m === 'nagad') info = "Nagad: " + (appSettings.nagadNumber || '');
+      if (m === 'binance') info = "Binance ID: " + (appSettings.binanceAddress || '');
+      document.getElementById('paymentNumberInfo').innerText = info;
+    }
+
+    function openChannel() {
+      tg.openTelegramLink(appSettings.channelLink || "https://t.me/nexuslink0");
+    }
+
     async function verifyJoin() {
-      try {
-        const res = await fetch(`/api/check-join/${userId}`);
-        const data = await res.json();
-        if (data.joined) {
-          showAlert("ভেরিফিকেশন সফল হয়েছে! আপনাকে ধন্যবাদ।");
-        } else {
-          showAlert("আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি! দয়া করে চ্যানেলে যুক্ত হন।");
-        }
-      } catch (e) {
-        showAlert("ভেরিফাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
-      }
+      const res = await fetch(`/api/check-join/${userId}`);
+      const data = await res.json();
+      showAlert(data.joined ? "ভেরিফিকেশন সফল হয়েছে!" : "আপনি এখনো জয়েন করেননি!");
+    }
+
+    async function submitSubscription() {
+      const trxId = document.getElementById('payTrxId').value;
+      const method = document.getElementById('payMethod').value;
+      if (!trxId) return showAlert("Transaction ID প্রদান করুন!");
+
+      const res = await fetch('/api/subscribe/submit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ userId, method, trxId })
+      });
+      const data = await res.json();
+      if (data.success) showAlert("পেমেন্ট জমা হয়েছে, রিভিউ শেষে কনফার্ম করা হবে।");
+    }
+
+    async function controlUser(action) {
+      const targetUserId = document.getElementById('targetUid').value;
+      if (!targetUserId) return showAlert("User ID দিন!");
+
+      const res = await fetch('/api/admin/user-control', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ adminId: userId, targetUserId, action })
+      });
+      const data = await res.json();
+      if (data.success) showAlert(`Action [${action}] successful!`);
     }
 
     async function saveAdminSettings() {
@@ -355,51 +253,32 @@
         adminId: userId,
         bkashNumber: document.getElementById('admBkash').value,
         nagadNumber: document.getElementById('admNagad').value,
+        binanceAddress: document.getElementById('admBinance').value,
+        subPrice: document.getElementById('admPrice').value,
         requiredChannel: document.getElementById('admChannel').value,
         bannerAdText: document.getElementById('admAdText').value,
-        bannerAdUrl: document.getElementById('admAdLink').value
+        bannerAdUrl: document.getElementById('admAdLink').value,
+        socialBarScript: document.getElementById('admSocialScript').value,
+        popunderScript: document.getElementById('admPopScript').value,
+        videoAdScript: document.getElementById('admVideoScript').value
       };
 
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (data.success) {
-        showAlert("অ্যাডমিন সেটিংস সফলভাবে সেভ হয়েছে!");
-        loadAppData();
-      }
+      if (data.success) showAlert("অ্যাডমিন সেটিংস সফলভাবে সেভ হয়েছে!");
     }
 
     function showAlert(msg) {
       document.getElementById('modalMsg').innerText = msg;
       document.getElementById('customModal').style.display = 'flex';
     }
-
-    function closeModal() {
-      document.getElementById('customModal').style.display = 'none';
-    }
-
-    function toggleLang() {
-      currentLang = currentLang === 'bn' ? 'en' : 'bn';
-      document.getElementById('langText').innerText = currentLang === 'bn' ? 'English' : 'বাংলা';
-      
-      if(currentLang === 'en') {
-        document.getElementById('txtTitle').innerText = "Join Our Channel";
-        document.getElementById('txtDesc').innerText = "Must join our official channel to use the features.";
-        document.getElementById('txtJoinBtn').innerText = "Join Channel";
-        document.getElementById('txtVerifyBtn').innerText = "Verify Join & Access";
-      } else {
-        document.getElementById('txtTitle').innerText = "আমাদের চ্যানেলে যুক্ত হন";
-        document.getElementById('txtDesc').innerText = "বটের সব সার্ভিস ব্যবহারের জন্য অফিসিয়াল চ্যানেলে জয়েন থাকা বাধ্যতামূলক।";
-        document.getElementById('txtJoinBtn').innerText = "Join Channel";
-        document.getElementById('txtVerifyBtn').innerText = "Verify Join & Access";
-      }
-    }
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
 
     loadAppData();
   </script>
 </body>
-    </html>
-    
+</html>
