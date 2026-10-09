@@ -5,46 +5,52 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Static Files Serve Line
 app.use(express.static(__dirname));
 
+// 🔑 Your Exact Credentials & Configurations
 const TOKEN = '8864054482:AAHHLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
 const ADMIN_ID = 7779071715; 
 const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Full Dynamic Control State
+// Memory Storage
 let appSettings = {
   bkashNumber: "01700000000",
   nagadNumber: "01700000000",
   binanceAddress: "123456789 (Pay ID)",
-  subPrice: "100 BDT",
+  targetBotUrl: "https://t.me/YourTargetBotUsername",
   requiredChannel: "@nexuslink0",
   channelLink: "https://t.me/nexuslink0",
-  premiumBotLink: "https://t.me/YourPremiumBotUsername",
-  bannerAdText: "🔥 ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন!",
+  bannerAdText: "🔥 স্পন্সর ওয়েবসাইট দেখে অফার উপভোগ করুন!",
   bannerAdUrl: "https://example.com",
-  adCodeFull: "" // HTML Script Code for Ads (Monetag / Adsterra / Popunder / Social Bar)
+  thirdPartyScript: ""
 };
 
 let bannedUsers = new Set();
-let subscribers = new Set([ADMIN_ID]);
-let paymentRequests = [];
+let approvedUsers = new Set([ADMIN_ID]);
+let payments = [];
 
+// Helper: Check Telegram Channel Membership
 async function checkChannelMembership(userId) {
   try {
     if (!appSettings.requiredChannel) return true;
     const member = await bot.getChatMember(appSettings.requiredChannel, userId);
     return ['creator', 'administrator', 'member'].includes(member.status);
   } catch (error) {
+    console.error("Channel check error:", error);
     return false;
   }
 }
 
+// Serve Main HTML
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+// Bot Command Listener
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -55,7 +61,7 @@ bot.on('message', (msg) => {
   }
 
   if (text.includes('find my device') || text === '/start') {
-    bot.sendMessage(chatId, `📱 **Welcome to Find My Device App**\n\nঅ্যাপটি ওপেন করতে নিচের বাটনে ক্লিক করুন:`, {
+    bot.sendMessage(chatId, `📱 **Welcome to Find My Device Service**\n\nঅ্যাপটি ব্যবহার করতে নিচের বাটনে চাপ দিন:`, {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -66,39 +72,7 @@ bot.on('message', (msg) => {
   }
 });
 
-// Admin Approval Buttons in Telegram
-bot.on('callback_query', async (query) => {
-  const data = query.data;
-  const chatId = query.message.chat.id;
-  const messageId = query.message.message_id;
-
-  if (query.from.id !== ADMIN_ID) return;
-
-  if (data.startsWith('approve_')) {
-    const targetUserId = parseInt(data.split('_')[1]);
-    subscribers.add(targetUserId);
-
-    bot.editMessageText(`✅ **পেমেন্ট অ্যাপ্রুভ করা হয়েছে!**\nUser ID: \`${targetUserId}\``, {
-      chat_id: chatId,
-      message_id: messageId,
-      parse_mode: 'Markdown'
-    });
-
-    bot.sendMessage(targetUserId, "🎉 **আপনার সাবস্ক্রিপশন অনুমোদিত হয়েছে!**\nএখন আপনি প্রিমিয়াম বট ব্যবহার করতে পারবেন।");
-  } else if (data.startsWith('reject_')) {
-    const targetUserId = parseInt(data.split('_')[1]);
-
-    bot.editMessageText(`❌ **পেমেন্ট বাতিল করা হয়েছে!**\nUser ID: \`${targetUserId}\``, {
-      chat_id: chatId,
-      message_id: messageId,
-      parse_mode: 'Markdown'
-    });
-
-    bot.sendMessage(targetUserId, "❌ **আপনার পেমেন্ট বাতিল করা হয়েছে।** সঠিক ট্রানজেকশন আইডিসহ আবার চেষ্টা করুন।");
-  }
-});
-
-// App Sync API
+// 🟢 1. Initialize App Data
 app.get('/api/init-app/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
 
@@ -107,84 +81,147 @@ app.get('/api/init-app/:userId', async (req, res) => {
   }
 
   const isJoined = await checkChannelMembership(userId);
-  const isSubscribed = subscribers.has(userId);
+  const approved = approvedUsers.has(userId);
 
   res.json({
-    isBanned: false,
+    approved: approved,
     isJoined: isJoined,
-    isSubscribed: isSubscribed,
-    isAdmin: userId === ADMIN_ID,
     appSettings: appSettings
   });
 });
 
+// 🟢 2. Check Channel Join Status
 app.get('/api/check-join/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
   const isJoined = await checkChannelMembership(userId);
-  res.json({ joined: isJoined });
+  res.json({ isJoined: isJoined });
 });
 
-// Submit Payment
-app.post('/api/subscribe/submit', (req, res) => {
-  const { userId, method, trxId } = req.body;
-  if (!userId || !trxId) return res.status(400).json({ success: false });
+// 🟢 3. Submit Payment Request
+app.post('/api/submit-payment', (req, res) => {
+  const { userId, userName, phone, method, trxId } = req.body;
 
-  const reqObj = { id: Date.now(), userId: parseInt(userId), method, trxId, status: 'pending' };
-  paymentRequests.push(reqObj);
+  if (!userId || !trxId) {
+    return res.status(400).json({ success: false, message: "TrxID এবং ইনফরমেশন প্রদান করুন!" });
+  }
 
+  const newPayment = {
+    id: Date.now(),
+    userId: parseInt(userId),
+    userName: userName || 'User',
+    phone: phone || 'N/A',
+    method: method,
+    trxId: trxId,
+    status: 'pending'
+  };
+
+  payments.push(newPayment);
+
+  // Send Notification to Admin in Telegram
   bot.sendMessage(ADMIN_ID, 
-    `🔔 **নতুন পেমেন্ট রিকোয়েস্ট!**\n\n👤 **User ID:** \`${userId}\`\n💳 **Method:** ${method}\n🧾 **TrxID:** \`${trxId}\``, 
-    {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "✅ Approve", callback_data: `approve_${userId}` },
-            { text: "❌ Reject", callback_data: `reject_${userId}` }
-          ]
-        ]
-      }
-    }
+    `🔔 **নতুন পেমেন্ট রিকোয়েস্ট!**\n\n👤 **User:** ${userName} (\`${userId}\`)\n📱 **Phone:** \`${phone}\`\n💳 **Method:** ${method}\n🧾 **TrxID:** \`${trxId}\``, 
+    { parse_mode: 'Markdown' }
   );
 
-  res.json({ success: true });
+  res.json({ success: true, message: "পেমেন্ট সফলভাবে জমা হয়েছে! অ্যাডমিন রিভিউ করে কনফার্ম করবেন।" });
 });
 
-// Admin User Control
+// 🟢 4. Load Admin Payments Table & Settings
+app.get('/api/admin/payments/:adminId', (req, res) => {
+  const adminId = parseInt(req.params.adminId);
+  if (adminId !== ADMIN_ID) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  res.json({
+    payments: payments,
+    appSettings: appSettings
+  });
+});
+
+// 🟢 5. Admin Approve / Reject Action
+app.post('/api/admin/action', (req, res) => {
+  const { adminId, paymentId, action } = req.body;
+  if (parseInt(adminId) !== ADMIN_ID) return res.status(403).json({ success: false });
+
+  const payment = payments.find(p => p.id === paymentId);
+  if (payment) {
+    payment.status = action === 'approve' ? 'approved' : 'rejected';
+
+    if (action === 'approve') {
+      approvedUsers.add(payment.userId);
+      bot.sendMessage(payment.userId, "🎉 **আপনার পেমেন্ট সফলভাবে অনুমোদিত হয়েছে!** আপনি এখন সার্ভিস ব্যবহার করতে পারবেন।");
+    } else {
+      bot.sendMessage(payment.userId, "❌ **আপনার দেওয়া পেমেন্ট রিকোয়েস্টটি বাতিল করা হয়েছে।** সঠিক ট্রানজেকশন আইডিসহ আবার চেষ্টা করুন।");
+    }
+
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, message: "Payment request not found" });
+  }
+});
+
+// 🟢 6. Admin Send Direct Message or Photo to User
+app.post('/api/admin/send-message', async (req, res) => {
+  const { adminId, targetUserId, messageText, imageUrl } = req.body;
+
+  if (parseInt(adminId) !== ADMIN_ID) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  try {
+    const targetId = parseInt(targetUserId);
+    if (imageUrl && imageUrl.trim() !== "") {
+      await bot.sendPhoto(targetId, imageUrl, {
+        caption: messageText || '',
+        parse_mode: 'Markdown'
+      });
+    } else if (messageText && messageText.trim() !== "") {
+      await bot.sendMessage(targetId, messageText, { parse_mode: 'Markdown' });
+    }
+    res.json({ success: true, message: "মেসেজ/ছবি সফলভাবে ইউজারের টেলিগ্রামে পাঠানো হয়েছে!" });
+  } catch (error) {
+    console.error("Send message error:", error);
+    res.json({ success: false, message: "মেসেজ পাঠাতে সমস্যা হয়েছে। User ID পরীক্ষা করুন।" });
+  }
+});
+
+// 🟢 7. Admin Ban/Unban/Sub Control
 app.post('/api/admin/user-control', (req, res) => {
   const { adminId, targetUserId, action } = req.body;
   if (parseInt(adminId) !== ADMIN_ID) return res.status(403).json({ success: false });
 
   const targetId = parseInt(targetUserId);
-  if (action === 'ban') bannedUsers.add(targetId);
-  else if (action === 'unban') bannedUsers.delete(targetId);
-  else if (action === 'add_sub') subscribers.add(targetId);
-  else if (action === 'remove_sub') subscribers.delete(targetId);
+  if (action === 'ban') {
+    bannedUsers.add(targetId);
+    approvedUsers.delete(targetId);
+  } else if (action === 'unban') {
+    bannedUsers.delete(targetId);
+  } else if (action === 'add_sub') {
+    approvedUsers.add(targetId);
+  }
 
   res.json({ success: true });
 });
 
-// Admin Save Settings
-app.post('/api/admin/settings', (req, res) => {
-  const { adminId, bkashNumber, nagadNumber, binanceAddress, subPrice, requiredChannel, premiumBotLink, bannerAdText, bannerAdUrl, adCodeFull } = req.body;
+// 🟢 8. Save Admin Settings
+app.post('/api/admin/update-settings', (req, res) => {
+  const { adminId, bkashNumber, nagadNumber, binanceAddress, targetBotUrl, requiredChannel, channelLink, bannerAdText, bannerAdUrl, thirdPartyScript } = req.body;
 
   if (parseInt(adminId) === ADMIN_ID) {
-    if (bkashNumber) appSettings.bkashNumber = bkashNumber;
-    if (nagadNumber) appSettings.nagadNumber = nagadNumber;
-    if (binanceAddress) appSettings.binanceAddress = binanceAddress;
-    if (subPrice) appSettings.subPrice = subPrice;
-    if (premiumBotLink) appSettings.premiumBotLink = premiumBotLink;
-    if (requiredChannel) {
-      appSettings.requiredChannel = requiredChannel;
-      appSettings.channelLink = `https://t.me/${requiredChannel.replace('@', '')}`;
-    }
-    if (bannerAdText) appSettings.bannerAdText = bannerAdText;
-    if (bannerAdUrl) appSettings.bannerAdUrl = bannerAdUrl;
-    if (adCodeFull !== undefined) appSettings.adCodeFull = adCodeFull;
+    if (bkashNumber !== undefined) appSettings.bkashNumber = bkashNumber;
+    if (nagadNumber !== undefined) appSettings.nagadNumber = nagadNumber;
+    if (binanceAddress !== undefined) appSettings.binanceAddress = binanceAddress;
+    if (targetBotUrl !== undefined) appSettings.targetBotUrl = targetBotUrl;
+    if (requiredChannel !== undefined) appSettings.requiredChannel = requiredChannel;
+    if (channelLink !== undefined) appSettings.channelLink = channelLink;
+    if (bannerAdText !== undefined) appSettings.bannerAdText = bannerAdText;
+    if (bannerAdUrl !== undefined) appSettings.bannerAdUrl = bannerAdUrl;
+    if (thirdPartyScript !== undefined) appSettings.thirdPartyScript = thirdPartyScript;
 
     res.json({ success: true, appSettings });
   } else {
-    res.status(403).json({ success: false });
+    res.status(403).json({ success: false, message: "Unauthorized" });
   }
 });
 
