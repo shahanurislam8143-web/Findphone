@@ -11,7 +11,7 @@ const TOKEN = '8864054482:AAENYq7qGxVccgTOvCgeLin-LZP5uhQUk50';
 const ADMIN_ID = 7779071715;                                   
 const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';      
 // ==============================================================
-<script src="https://pl31705125.profitableratecpmnetwork.com/2d/dd/31/2ddd310583ce798beea7d6f74bce1fb0.js"></script>
+
 const bot = new TelegramBot(TOKEN, { polling: true });
 
 let payments = []; 
@@ -20,7 +20,7 @@ let userAccess = new Map();
 let appSettings = {
     bkashNumber: "বন্ধ আছে",
     nagadNumber: "01341048143",
-    binanceAddress: "123456789 (Pay ID)",
+    binanceAddress: "1135769847 (Pay ID)",
     targetBotUrl: "https://t.me/findsyourdevice_bot",
     requiredChannel: "@nexuslink0",
     channelLink: "https://t.me/nexuslink0",
