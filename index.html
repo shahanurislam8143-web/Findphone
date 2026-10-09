@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus Link - Advanced Mini App</title>
+  <title>Nexus Master Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -15,7 +15,6 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; padding: 16px; display: flex; flex-direction: column; align-items: center; }
     .container { width: 100%; max-width: 440px; }
@@ -32,7 +31,7 @@
 
     .input-group { margin-bottom: 10px; }
     .input-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 13px; outline: none; }
+    .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 13px; outline: none; }
 
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
     .modal { background: #1e1b4b; border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px; width: 85%; max-width: 320px; text-align: center; }
@@ -40,18 +39,19 @@
 </head>
 <body>
 
-  <div id="adScriptsContainer"></div>
+  <!-- Dynamic Ad Injection Container -->
+  <div id="dynamicAdSection" style="width: 100%; text-align: center;"></div>
 
   <div class="container">
     <div class="header-bar">
       <div style="font-weight: 700; font-size: 18px;">⚡ NEXUS APP</div>
-      <span id="subStatusBadge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 12px; font-size: 12px;">Unsubscribed</span>
+      <span id="subStatusBadge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 12px; font-size: 12px;">Free User</span>
     </div>
 
-    <!-- Banner Ads -->
+    <!-- Banner Ads / Direct Link Banner -->
     <div class="ad-banner" id="adBox">
       🔥 <span id="adText">বিশেষ স্পন্সর ওয়েবসাইট দেখুন!</span> 
-      <a href="#" id="adLink" target="_blank">[Visit]</a>
+      <a href="#" id="adLink" target="_blank">[Click & Visit]</a>
     </div>
 
     <!-- Banned Screen -->
@@ -63,20 +63,21 @@
     <!-- Force Join Section -->
     <div class="glass-card" id="joinCard">
       <h3 style="margin-bottom: 8px; text-align: center;"><i class="fa-solid fa-bullhorn"></i> চ্যানেলে যুক্ত হন</h3>
-      <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 14px;">বট ব্যবহার করতে অফিসিয়াল চ্যানেলে থাকা বাধ্যতামূলক।</p>
+      <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 14px;">বট ব্যবহার করতে অফিশিয়াল চ্যানেলে থাকা বাধ্যতামূলক।</p>
       <button class="btn btn-secondary" onclick="openChannel()"><i class="fa-brands fa-telegram"></i> Join Channel</button>
       <button class="btn btn-primary" onclick="verifyJoin()"><i class="fa-solid fa-circle-check"></i> Verify Membership</button>
     </div>
 
-    <!-- Video Ad Container -->
-    <div class="glass-card" id="videoAdBox" style="display: none; text-align: center;">
-      <h4>📺 Watch Sponsored Video Ad</h4>
-      <div id="videoAdArea" style="margin-top: 10px;"></div>
+    <!-- Premium Service Access -->
+    <div class="glass-card" id="premiumBotCard" style="display: none;">
+      <h3 style="color: #34d399;"><i class="fa-solid fa-robot"></i> Premium Bot Access</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin: 6px 0;">আপনার সাবস্ক্রিপশন সক্রিয় রয়েছে:</p>
+      <button class="btn btn-primary" onclick="openPremiumBot()"><i class="fa-solid fa-bolt"></i> Open Premium Bot</button>
     </div>
 
     <!-- Subscription Purchase Box -->
     <div class="glass-card" id="subCard">
-      <h3><i class="fa-solid fa-gem"></i> Buy Subscription</h3>
+      <h3><i class="fa-solid fa-gem"></i> Premium Subscription</h3>
       <p style="font-size: 12px; color: var(--text-muted); margin: 6px 0;">মূল্য: <span id="subPriceText" style="color: #a855f7; font-weight: bold;">100 BDT</span></p>
       
       <div class="input-group">
@@ -96,33 +97,36 @@
       <button class="btn btn-primary" onclick="submitSubscription()"><i class="fa-solid fa-paper-plane"></i> Submit Payment</button>
     </div>
 
-    <!-- Admin Panel -->
+    <!-- Full Master Admin Panel -->
     <div class="glass-card" id="adminPanel" style="display: none;">
-      <h3 style="color: #a855f7; margin-bottom: 12px;"><i class="fa-solid fa-user-shield"></i> Admin Control Panel</h3>
+      <h3 style="color: #a855f7; margin-bottom: 12px;"><i class="fa-solid fa-user-shield"></i> Master Admin Control</h3>
       
       <div class="input-group"><label>bKash Number</label><input type="text" id="admBkash"></div>
       <div class="input-group"><label>Nagad Number</label><input type="text" id="admNagad"></div>
       <div class="input-group"><label>Binance Address</label><input type="text" id="admBinance"></div>
-      <div class="input-group"><label>Sub Price</label><input type="text" id="admPrice"></div>
-      <div class="input-group"><label>Channel Username (@)</label><input type="text" id="admChannel"></div>
+      <div class="input-group"><label>Subscription Price</label><input type="text" id="admPrice"></div>
+      <div class="input-group"><label>Required Channel Username (@)</label><input type="text" id="admChannel"></div>
+      <div class="input-group"><label>Premium Bot Link (URL)</label><input type="text" id="admPremiumBot"></div>
       <div class="input-group"><label>Banner Ad Text</label><input type="text" id="admAdText"></div>
-      <div class="input-group"><label>Banner Ad Link</label><input type="text" id="admAdLink"></div>
+      <div class="input-group"><label>Banner Ad Direct Link (Monetag/Adsterra Link)</label><input type="text" id="admAdLink"></div>
       
       <hr style="border: 0.5px solid var(--glass-border); margin: 12px 0;">
-      <h4 style="font-size: 12px; color: #fbbf24;">📺 Ads Integration Scripts</h4>
-      <div class="input-group"><label>Social Bar Script URL</label><input type="text" id="admSocialScript"></div>
-      <div class="input-group"><label>Popunder Script URL</label><input type="text" id="admPopScript"></div>
-      <div class="input-group"><label>Video Ad Script URL</label><input type="text" id="admVideoScript"></div>
+      <h4 style="font-size: 12px; color: #fbbf24; margin-bottom: 4px;">💰 Adsterra / Monetag Script Code</h4>
+      <div class="input-group">
+        <label>Paste Complete Ad Code (<script>...</script>)</label>
+        <textarea id="admAdCodeFull" rows="4" placeholder="Paste your Adsterra or Monetag script tag here..."></textarea>
+      </div>
 
       <button class="btn btn-primary" onclick="saveAdminSettings()"><i class="fa-solid fa-floppy-disk"></i> Save All Settings</button>
 
       <hr style="border: 0.5px solid var(--glass-border); margin: 12px 0;">
       <h4 style="font-size: 12px; color: #ef4444;">🚫 User Ban & Control</h4>
-      <div class="input-group"><label>Target User ID</label><input type="number" id="targetUid" placeholder="e.g. 123456789"></div>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.2);" onclick="controlUser('ban')">Ban</button>
-        <button class="btn btn-secondary" onclick="controlUser('unban')">Unban</button>
-        <button class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.2);" onclick="controlUser('add_sub')">+ Sub</button>
+      <div class="input-group"><label>Target User ID</label><input type="number" id="targetUid" placeholder="Enter Telegram User ID"></div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.2);" onclick="controlUser('ban')">Ban User</button>
+        <button class="btn btn-secondary" onclick="controlUser('unban')">Unban User</button>
+        <button class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.2);" onclick="controlUser('add_sub')">+ Add Premium</button>
+        <button class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.2);" onclick="controlUser('remove_sub')">- Remove Premium</button>
       </div>
     </div>
   </div>
@@ -156,15 +160,21 @@
         appSettings = data.appSettings || {};
 
         if (data.isSubscribed) {
-          document.getElementById('subStatusBadge').innerText = "Subscribed (Active)";
+          document.getElementById('subStatusBadge').innerText = "Premium Active";
           document.getElementById('subStatusBadge').style.background = "rgba(16, 185, 129, 0.2)";
           document.getElementById('subStatusBadge').style.color = "#34d399";
+          document.getElementById('premiumBotCard').style.display = 'block';
         }
 
-        // Ads script injection
-        injectAdsScripts(appSettings);
+        // Apply Banner & Direct Ad Links
+        if (appSettings.bannerAdText) document.getElementById('adText').innerText = appSettings.bannerAdText;
+        if (appSettings.bannerAdUrl) document.getElementById('adLink').href = appSettings.bannerAdUrl;
 
-        // Fill admin forms
+        // Execute Custom Ad Script Code safely
+        if (appSettings.adCodeFull) {
+          executeAdScript(appSettings.adCodeFull);
+        }
+
         if (data.isAdmin) {
           document.getElementById('adminPanel').style.display = 'block';
           document.getElementById('admBkash').value = appSettings.bkashNumber || '';
@@ -172,32 +182,29 @@
           document.getElementById('admBinance').value = appSettings.binanceAddress || '';
           document.getElementById('admPrice').value = appSettings.subPrice || '';
           document.getElementById('admChannel').value = appSettings.requiredChannel || '';
+          document.getElementById('admPremiumBot').value = appSettings.premiumBotLink || '';
           document.getElementById('admAdText').value = appSettings.bannerAdText || '';
           document.getElementById('admAdLink').value = appSettings.bannerAdUrl || '';
-          document.getElementById('admSocialScript').value = appSettings.socialBarScript || '';
-          document.getElementById('admPopScript').value = appSettings.popunderScript || '';
-          document.getElementById('admVideoScript').value = appSettings.videoAdScript || '';
+          document.getElementById('admAdCodeFull').value = appSettings.adCodeFull || '';
         }
 
         updatePaymentInfo();
       } catch (e) { console.error(e); }
     }
 
-    function injectAdsScripts(set) {
-      const container = document.getElementById('adScriptsContainer');
-      container.innerHTML = '';
-      
-      if (set.socialBarScript) {
-        const s = document.createElement('script'); s.src = set.socialBarScript; container.appendChild(s);
-      }
-      if (set.popunderScript) {
-        const s = document.createElement('script'); s.src = set.popunderScript; container.appendChild(s);
-      }
-      if (set.videoAdScript) {
-        document.getElementById('videoAdBox').style.display = 'block';
-        const s = document.createElement('script'); s.src = set.videoAdScript;
-        document.getElementById('videoAdArea').appendChild(s);
-      }
+    // Dynamic Script Execution Engine
+    function executeAdScript(htmlCode) {
+      const container = document.getElementById('dynamicAdSection');
+      container.innerHTML = htmlCode;
+
+      // Re-execute parsed scripts
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
     }
 
     document.getElementById('payMethod').addEventListener('change', updatePaymentInfo);
@@ -211,9 +218,8 @@
       document.getElementById('paymentNumberInfo').innerText = info;
     }
 
-    function openChannel() {
-      tg.openTelegramLink(appSettings.channelLink || "https://t.me/nexuslink0");
-    }
+    function openChannel() { tg.openTelegramLink(appSettings.channelLink || "https://t.me/nexuslink0"); }
+    function openPremiumBot() { tg.openTelegramLink(appSettings.premiumBotLink || "https://t.me/YourPremiumBotUsername"); }
 
     async function verifyJoin() {
       const res = await fetch(`/api/check-join/${userId}`);
@@ -232,7 +238,7 @@
         body: JSON.stringify({ userId, method, trxId })
       });
       const data = await res.json();
-      if (data.success) showAlert("পেমেন্ট জমা হয়েছে, রিভিউ শেষে কনফার্ম করা হবে।");
+      if (data.success) showAlert("পেমেন্ট সফলভাবে জমা হয়েছে! অ্যাডমিন কনফার্ম করলে সার্ভিস চালু হবে।");
     }
 
     async function controlUser(action) {
@@ -256,11 +262,10 @@
         binanceAddress: document.getElementById('admBinance').value,
         subPrice: document.getElementById('admPrice').value,
         requiredChannel: document.getElementById('admChannel').value,
+        premiumBotLink: document.getElementById('admPremiumBot').value,
         bannerAdText: document.getElementById('admAdText').value,
         bannerAdUrl: document.getElementById('admAdLink').value,
-        socialBarScript: document.getElementById('admSocialScript').value,
-        popunderScript: document.getElementById('admPopScript').value,
-        videoAdScript: document.getElementById('admVideoScript').value
+        adCodeFull: document.getElementById('admAdCodeFull').value
       };
 
       const res = await fetch('/api/admin/settings', {
