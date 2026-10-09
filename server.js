@@ -6,24 +6,25 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// --- ⚙️ শুধুমাত্র এই ৩টি কোডে থাকবে ⚙️ ---
-const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4';  
-const ADMIN_ID = 7779071715; 
-const WEBAPP_URL = '
-const bot = new 'https://findphone-rxl7.onrender.com';  
+// Static Files Serve
+app.use(express.static(__dirname));
 
-(TOKEN, { polling: true });
+// 🟢 সঠিক Credentials বসানো হয়েছে:
+const TOKEN = '8864054482:AAHHLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
+const ADMIN_ID = 7779071715; 
+const WEBAPP_URL = 'https://findphone-rxl7.onrender.com'; 
+
+const bot = new TelegramBot(TOKEN, { polling: true });
 
 let payments = []; 
 let userAccess = new Map(); 
 
-// 🛠️ বাকি সবকিছু অ্যাডমিন প্যানেল থেকে কাস্টমাইজযোগ্য:
 let appSettings = {
     bkashNumber: "01700000000",
     nagadNumber: "01700000000",
     binanceAddress: "123456789 (Pay ID)",
-    targetBotUrl: "https://t.me/YourTargetBotUsername", // 👈 অ্যাডমিন প্যানেল থেকে আপডেটযোগ্য
-    requiredChannel: "@nexuslink0",                      // 👈 অ্যাডমিন প্যানেল থেকে আপডেটযোগ্য
+    targetBotUrl: "https://t.me/YourTargetBotUsername",
+    requiredChannel: "@nexuslink0",
     channelLink: "https://t.me/nexuslink0",
     bannerAdText: "🔥 বিশেষ ছাড়! ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন।",
     bannerAdUrl: "https://example.com",
@@ -141,7 +142,13 @@ app.post('/api/admin/action', (req, res) => {
         userAccess.set(targetPayment.userId, true);
 
         bot.sendMessage(targetPayment.userId, 
-            '🎉 **অভিনন্দন! আপনার পেমেন্ট সফল হয়েছে।**\n\nঅ্যাপে ঢুকে চ্যানেল জয়েন ভেরিফাই করে মূল সার্ভিস ব্যবহার করুন।');
+            '🎉 **অভিনন্দন! আপনার পেমেন্ট সফল হয়েছে।**\n\nঅ্যাপে ঢুকে চ্যানেল জয়েন ভেরিফাই করে মূল সার্ভিস ব্যবহার করুন।', {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "🚀 Open Target Bot", url: appSettings.targetBotUrl || "https://t.me/nexuslink0" }]
+                    ]
+                }
+            });
     } else if (action === 'reject') {
         targetPayment.status = 'rejected';
         userAccess.set(targetPayment.userId, false);
@@ -150,6 +157,45 @@ app.post('/api/admin/action', (req, res) => {
     }
 
     res.json({ success: true, payment: targetPayment });
+});
+
+// 📩 ইউজারকে ডিরেক্ট মেসেজ ও ছবি পাঠানোর API
+app.post('/api/admin/send-message', async (req, res) => {
+    const { adminId, targetUserId, messageText, imageUrl } = req.body;
+
+    if (parseInt(adminId) !== ADMIN_ID) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    try {
+        const targetId = parseInt(targetUserId);
+        if (imageUrl && imageUrl.trim() !== "") {
+            await bot.sendPhoto(targetId, imageUrl, { caption: messageText || '', parse_mode: 'Markdown' });
+        } else if (messageText && messageText.trim() !== "") {
+            await bot.sendMessage(targetId, messageText, { parse_mode: 'Markdown' });
+        }
+        res.json({ success: true, message: 'মেসেজ পাঠানো হয়েছে!' });
+    } catch (err) {
+        res.json({ success: false, error: 'মেসেজ পাঠাতে ব্যর্থ হয়েছে।' });
+    }
+});
+
+// 🚫 ইউজার ব্যান/আনব্যান API
+app.post('/api/admin/user-control', (req, res) => {
+    const { adminId, targetUserId, action } = req.body;
+
+    if (parseInt(adminId) !== ADMIN_ID) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    const targetId = parseInt(targetUserId);
+    if (action === 'ban') {
+        userAccess.set(targetId, false);
+    } else if (action === 'add_sub') {
+        userAccess.set(targetId, true);
+    }
+
+    res.json({ success: true });
 });
 
 app.post('/api/admin/update-settings', (req, res) => {
@@ -171,8 +217,6 @@ app.post('/api/admin/update-settings', (req, res) => {
 
     res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
 });
-
-app.use(express.static('.'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
