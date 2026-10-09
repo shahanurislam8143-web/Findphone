@@ -5,18 +5,15 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Static Files Serve
 app.use(express.static(__dirname));
 
-// Configuration
-const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
+const TOKEN = '8864054482:AAHHLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
 const ADMIN_ID = 7779071715; 
 const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Memory Database
+// Full Dynamic Control State
 let appSettings = {
   bkashNumber: "01700000000",
   nagadNumber: "01700000000",
@@ -24,35 +21,30 @@ let appSettings = {
   subPrice: "100 BDT",
   requiredChannel: "@nexuslink0",
   channelLink: "https://t.me/nexuslink0",
+  premiumBotLink: "https://t.me/YourPremiumBotUsername",
   bannerAdText: "🔥 ৫০% ডিসকাউন্ট পেতে স্পন্সর ওয়েবসাইট দেখুন!",
   bannerAdUrl: "https://example.com",
-  socialBarScript: "", // Adsterra / Monetag Social bar script URL
-  popunderScript: "",  // Popunder Ads script URL
-  videoAdScript: ""    // Video Ads script URL
+  adCodeFull: "" // HTML Script Code for Ads (Monetag / Adsterra / Popunder / Social Bar)
 };
 
 let bannedUsers = new Set();
-let subscribers = new Set([ADMIN_ID]); // Admin by default active
+let subscribers = new Set([ADMIN_ID]);
 let paymentRequests = [];
 
-// Force Join Check
 async function checkChannelMembership(userId) {
   try {
     if (!appSettings.requiredChannel) return true;
     const member = await bot.getChatMember(appSettings.requiredChannel, userId);
     return ['creator', 'administrator', 'member'].includes(member.status);
   } catch (error) {
-    console.error("Channel check error:", error);
     return false;
   }
 }
 
-// Serve Frontend
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Bot Commands
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -63,10 +55,7 @@ bot.on('message', (msg) => {
   }
 
   if (text.includes('find my device') || text === '/start') {
-    const caption = `📱 **Welcome to Find My Device App**\n\n` +
-                    `অ্যাপটি ব্যবহার করতে নিচের **Open App** বাটনে চাপ দিন:`;
-
-    bot.sendMessage(chatId, caption, {
+    bot.sendMessage(chatId, `📱 **Welcome to Find My Device App**\n\nঅ্যাপটি ওপেন করতে নিচের বাটনে ক্লিক করুন:`, {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -77,7 +66,39 @@ bot.on('message', (msg) => {
   }
 });
 
-// API Routes
+// Admin Approval Buttons in Telegram
+bot.on('callback_query', async (query) => {
+  const data = query.data;
+  const chatId = query.message.chat.id;
+  const messageId = query.message.message_id;
+
+  if (query.from.id !== ADMIN_ID) return;
+
+  if (data.startsWith('approve_')) {
+    const targetUserId = parseInt(data.split('_')[1]);
+    subscribers.add(targetUserId);
+
+    bot.editMessageText(`✅ **পেমেন্ট অ্যাপ্রুভ করা হয়েছে!**\nUser ID: \`${targetUserId}\``, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'Markdown'
+    });
+
+    bot.sendMessage(targetUserId, "🎉 **আপনার সাবস্ক্রিপশন অনুমোদিত হয়েছে!**\nএখন আপনি প্রিমিয়াম বট ব্যবহার করতে পারবেন।");
+  } else if (data.startsWith('reject_')) {
+    const targetUserId = parseInt(data.split('_')[1]);
+
+    bot.editMessageText(`❌ **পেমেন্ট বাতিল করা হয়েছে!**\nUser ID: \`${targetUserId}\``, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'Markdown'
+    });
+
+    bot.sendMessage(targetUserId, "❌ **আপনার পেমেন্ট বাতিল করা হয়েছে।** সঠিক ট্রানজেকশন আইডিসহ আবার চেষ্টা করুন।");
+  }
+});
+
+// App Sync API
 app.get('/api/init-app/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
 
@@ -103,76 +124,63 @@ app.get('/api/check-join/:userId', async (req, res) => {
   res.json({ joined: isJoined });
 });
 
-// Submit Payment for Subscription
+// Submit Payment
 app.post('/api/subscribe/submit', (req, res) => {
-  const { userId, username, method, trxId } = req.body;
-  if (!userId || !trxId) return res.status(400).json({ success: false, message: 'Missing fields' });
+  const { userId, method, trxId } = req.body;
+  if (!userId || !trxId) return res.status(400).json({ success: false });
 
-  const reqObj = { id: Date.now(), userId: parseInt(userId), username: username || 'User', method, trxId, status: 'pending' };
+  const reqObj = { id: Date.now(), userId: parseInt(userId), method, trxId, status: 'pending' };
   paymentRequests.push(reqObj);
 
-  // Notify Admin in Telegram
-  bot.sendMessage(ADMIN_ID, `🔔 **নতুন সাবস্ক্রিপশন পেমেন্ট রিকোয়েস্ট!**\n\nUser ID: \`${userId}\`\nMethod: ${method}\nTrxID: \`${trxId}\``, { parse_mode: 'Markdown' });
+  bot.sendMessage(ADMIN_ID, 
+    `🔔 **নতুন পেমেন্ট রিকোয়েস্ট!**\n\n👤 **User ID:** \`${userId}\`\n💳 **Method:** ${method}\n🧾 **TrxID:** \`${trxId}\``, 
+    {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ Approve", callback_data: `approve_${userId}` },
+            { text: "❌ Reject", callback_data: `reject_${userId}` }
+          ]
+        ]
+      }
+    }
+  );
 
-  res.json({ success: true, message: 'Payment submitted for review.' });
+  res.json({ success: true });
 });
 
-// Admin Panel APIs
-app.get('/api/admin/payments', (req, res) => {
-  res.json({ payments: paymentRequests });
-});
-
-app.post('/api/admin/approve-payment', (req, res) => {
-  const { adminId, reqId } = req.body;
-  if (parseInt(adminId) !== ADMIN_ID) return res.status(403).json({ success: false });
-
-  const pReq = paymentRequests.find(p => p.id === reqId);
-  if (pReq) {
-    pReq.status = 'approved';
-    subscribers.add(pReq.userId);
-    bot.sendMessage(pReq.userId, "🎉 **আপনার সাবস্ক্রিপশন সফলভাবে অ্যাক্টিভ হয়েছে!**");
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ success: false });
-  }
-});
-
+// Admin User Control
 app.post('/api/admin/user-control', (req, res) => {
   const { adminId, targetUserId, action } = req.body;
   if (parseInt(adminId) !== ADMIN_ID) return res.status(403).json({ success: false });
 
   const targetId = parseInt(targetUserId);
+  if (action === 'ban') bannedUsers.add(targetId);
+  else if (action === 'unban') bannedUsers.delete(targetId);
+  else if (action === 'add_sub') subscribers.add(targetId);
+  else if (action === 'remove_sub') subscribers.delete(targetId);
 
-  if (action === 'ban') {
-    bannedUsers.add(targetId);
-  } else if (action === 'unban') {
-    bannedUsers.delete(targetId);
-  } else if (action === 'add_sub') {
-    subscribers.add(targetId);
-  } else if (action === 'remove_sub') {
-    subscribers.delete(targetId);
-  }
-
-  res.json({ success: true, bannedUsers: Array.from(bannedUsers), subscribers: Array.from(subscribers) });
+  res.json({ success: true });
 });
 
+// Admin Save Settings
 app.post('/api/admin/settings', (req, res) => {
-  const { adminId, bkashNumber, nagadNumber, binanceAddress, subPrice, requiredChannel, bannerAdText, bannerAdUrl, socialBarScript, popunderScript, videoAdScript } = req.body;
+  const { adminId, bkashNumber, nagadNumber, binanceAddress, subPrice, requiredChannel, premiumBotLink, bannerAdText, bannerAdUrl, adCodeFull } = req.body;
 
   if (parseInt(adminId) === ADMIN_ID) {
     if (bkashNumber) appSettings.bkashNumber = bkashNumber;
     if (nagadNumber) appSettings.nagadNumber = nagadNumber;
     if (binanceAddress) appSettings.binanceAddress = binanceAddress;
     if (subPrice) appSettings.subPrice = subPrice;
+    if (premiumBotLink) appSettings.premiumBotLink = premiumBotLink;
     if (requiredChannel) {
       appSettings.requiredChannel = requiredChannel;
       appSettings.channelLink = `https://t.me/${requiredChannel.replace('@', '')}`;
     }
     if (bannerAdText) appSettings.bannerAdText = bannerAdText;
     if (bannerAdUrl) appSettings.bannerAdUrl = bannerAdUrl;
-    if (socialBarScript !== undefined) appSettings.socialBarScript = socialBarScript;
-    if (popunderScript !== undefined) appSettings.popunderScript = popunderScript;
-    if (videoAdScript !== undefined) appSettings.videoAdScript = videoAdScript;
+    if (adCodeFull !== undefined) appSettings.adCodeFull = adCodeFull;
 
     res.json({ success: true, appSettings });
   } else {
