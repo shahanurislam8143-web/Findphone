@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 
 // ==================== ⚙️ CONFIGURATION ⚙️ ====================
-const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
+const TOKEN = '8864054482:AAENYq7qGxVccgTOvCgeLin-LZP5uhQUk50'; 
 const ADMIN_ID = 7779071715;                                   
 const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';      
 // ==============================================================
