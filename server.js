@@ -6,13 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Static Files Serve
-app.use(express.static(__dirname));
-
-// 🟢 সঠিক Credentials বসানো হয়েছে:
-const TOKEN = '8864054482:AAHHLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
-const ADMIN_ID = 7779071715; 
-const WEBAPP_URL = 'https://findphone-rxl7.onrender.com'; 
+// ==================== ⚙️ CONFIGURATION ⚙️ ====================
+const TOKEN = '8864054482:AAHhLXKwCv_sHKqGNSmEfg1yuABqmzZ3Xx4'; 
+const ADMIN_ID = 7779071715;                                   
+const WEBAPP_URL = 'https://findphone-rxl7.onrender.com';      
+// ==============================================================
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -31,20 +29,27 @@ let appSettings = {
     thirdPartyScript: ""
 };
 
-// 🔍 চ্যানেল জয়েন চেক ফাংশন
+// 🔍 Channel Join Status Checker
 async function checkChannelMembership(userId) {
     try {
         if (!appSettings.requiredChannel) return true;
-        const member = await bot.getChatMember(appSettings.requiredChannel, userId);
+        
+        let targetChannel = appSettings.requiredChannel.trim();
+        
+        if (!targetChannel.startsWith('@') && !targetChannel.startsWith('-100')) {
+            targetChannel = '@' + targetChannel;
+        }
+
+        const member = await bot.getChatMember(targetChannel, userId);
         return ['creator', 'administrator', 'member'].includes(member.status);
     } catch (error) {
-        console.error("Channel check error:", error);
+        console.error("Channel Check Failed Reason:", error.message);
         return false;
     }
 }
 
-// চ্যাট হ্যান্ডলার
-bot.on('message', (msg) => {
+// Bot Command Handler
+bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.toLowerCase() : '';
 
@@ -82,7 +87,7 @@ app.get('/api/check-join/:userId', async (req, res) => {
     res.json({ isJoined: isJoined });
 });
 
-app.post('/api/submit-payment', (req, res) => {
+app.post('/api/submit-payment', async (req, res) => {
     const { userId, userName, phone, method, trxId } = req.body;
 
     if (!userId || !trxId || !phone) {
@@ -102,15 +107,27 @@ app.post('/api/submit-payment', (req, res) => {
 
     payments.unshift(newPayment);
 
-    bot.sendMessage(ADMIN_ID,
-        `💰 **নতুন পেমেন্ট রিকোয়েস্ট!**\n\n` +
-        `👤 **User:** ${userName} (\`${userId}\`)\n` +
-        `📱 **Phone/Account:** \`${phone}\`\n` +
-        `💳 **Method:** ${method}\n` +
-        `🧾 **TrxID/TxID:** \`${trxId}\`\n\n` +
-        `অনুমোদনের জন্য মিনি অ্যাপের অ্যাডমিন প্যানেল ভিজিট করুন।`,
-        { parse_mode: 'Markdown' }
-    );
+    // Admin Bot Inbox Notification Message
+    try {
+        await bot.sendMessage(ADMIN_ID,
+            `🔔 **নতুন সাবস্ক্রিপশন পেমেন্ট রিকোয়েস্ট!**\n\n` +
+            `👤 **User:** ${userName} (\`${userId}\`)\n` +
+            `📱 **Phone/Account:** \`${phone}\`\n` +
+            `💳 **Method:** ${method}\n` +
+            `🧾 **TrxID/TxID:** \`${trxId}\`\n\n` +
+            `অনুমোদনের জন্য মিনি অ্যাপের অ্যাডমিন প্যানেল ভিজিট করুন।`,
+            { 
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "💳 Subscription Panel", web_app: { url: WEBAPP_URL } }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error("Admin Notify Error:", err.message);
+    }
 
     res.json({ success: true, message: 'পেমেন্ট সাবমিট করা হয়েছে! অ্যাডমিন ভেরিফাই করলে সেবা আনলক হবে।' });
 });
@@ -123,7 +140,7 @@ app.get('/api/admin/payments/:adminId', (req, res) => {
     res.json({ payments: payments, appSettings: appSettings });
 });
 
-app.post('/api/admin/action', (req, res) => {
+app.post('/api/admin/action', async (req, res) => {
     const { adminId, paymentId, action } = req.body;
 
     if (parseInt(adminId) !== ADMIN_ID) {
@@ -141,61 +158,24 @@ app.post('/api/admin/action', (req, res) => {
         targetPayment.status = 'approved';
         userAccess.set(targetPayment.userId, true);
 
-        bot.sendMessage(targetPayment.userId, 
-            '🎉 **অভিনন্দন! আপনার পেমেন্ট সফল হয়েছে।**\n\nঅ্যাপে ঢুকে চ্যানেল জয়েন ভেরিফাই করে মূল সার্ভিস ব্যবহার করুন।', {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "🚀 Open Target Bot", url: appSettings.targetBotUrl || "https://t.me/nexuslink0" }]
-                    ]
-                }
-            });
+        try {
+            await bot.sendMessage(targetPayment.userId, 
+                '🎉 **অভিনন্দন! আপনার পেমেন্ট সফল হয়েছে।**\n\nঅ্যাপে ঢুকে চ্যানেল জয়েন ভেরিফাই করে মূল সার্ভিস ব্যবহার করুন।');
+        } catch (e) {
+            console.error("User notify error:", e.message);
+        }
     } else if (action === 'reject') {
         targetPayment.status = 'rejected';
         userAccess.set(targetPayment.userId, false);
 
-        bot.sendMessage(targetPayment.userId, '❌ দুঃখিত, আপনার পেমেন্ট রিকোয়েস্টটি বাতিল করা হয়েছে। সঠিক TrxID দিন।');
+        try {
+            await bot.sendMessage(targetPayment.userId, '❌ দুঃখিত, আপনার পেমেন্ট রিকোয়েস্টটি বাতিল করা হয়েছে। সঠিক TrxID দিন।');
+        } catch (e) {
+            console.error("User notify error:", e.message);
+        }
     }
 
     res.json({ success: true, payment: targetPayment });
-});
-
-// 📩 ইউজারকে ডিরেক্ট মেসেজ ও ছবি পাঠানোর API
-app.post('/api/admin/send-message', async (req, res) => {
-    const { adminId, targetUserId, messageText, imageUrl } = req.body;
-
-    if (parseInt(adminId) !== ADMIN_ID) {
-        return res.status(403).json({ error: 'Unauthorized!' });
-    }
-
-    try {
-        const targetId = parseInt(targetUserId);
-        if (imageUrl && imageUrl.trim() !== "") {
-            await bot.sendPhoto(targetId, imageUrl, { caption: messageText || '', parse_mode: 'Markdown' });
-        } else if (messageText && messageText.trim() !== "") {
-            await bot.sendMessage(targetId, messageText, { parse_mode: 'Markdown' });
-        }
-        res.json({ success: true, message: 'মেসেজ পাঠানো হয়েছে!' });
-    } catch (err) {
-        res.json({ success: false, error: 'মেসেজ পাঠাতে ব্যর্থ হয়েছে।' });
-    }
-});
-
-// 🚫 ইউজার ব্যান/আনব্যান API
-app.post('/api/admin/user-control', (req, res) => {
-    const { adminId, targetUserId, action } = req.body;
-
-    if (parseInt(adminId) !== ADMIN_ID) {
-        return res.status(403).json({ error: 'Unauthorized!' });
-    }
-
-    const targetId = parseInt(targetUserId);
-    if (action === 'ban') {
-        userAccess.set(targetId, false);
-    } else if (action === 'add_sub') {
-        userAccess.set(targetId, true);
-    }
-
-    res.json({ success: true });
 });
 
 app.post('/api/admin/update-settings', (req, res) => {
@@ -217,6 +197,8 @@ app.post('/api/admin/update-settings', (req, res) => {
 
     res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
 });
+
+app.use(express.static('.'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
