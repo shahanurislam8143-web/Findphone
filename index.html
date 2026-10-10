@@ -3,6 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    // বিজ্ঞাপনের ভুল লিংকের কারণে মিনি অ্যাপ ক্র্যাশ হওয়া ঠেকানোর কোড
+    window.addEventListener('beforeunload', function (e) {
+        // মিনি অ্যাপের ভেতরের পেজ যেন বিজ্ঞাপন দ্বারা রিডাইরেক্ট না হয়
+    });
+
+    // ক্লিক ব্লক না করে শুধু এরর স্ক্রিন আসা ঠেকানো
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('ERR_UNKNOWN_URL_SCHEME')) {
+            e.preventDefault();
+            return true;
+        }
+    }, true);
+    </script>
+
+    
     <title>Find My Device</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
